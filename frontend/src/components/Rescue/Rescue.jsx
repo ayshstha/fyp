@@ -1,10 +1,12 @@
 import { Phone, MapPin } from 'lucide-react';
 import './Rescue.css';
 
-export default function Rescue() {
+export default function Rescue({ showButton = true }) {
   return (
     <section className="rescue-portal">
-      <h2 style={{ textAlign: 'center', marginBottom: '3rem' }}>Rescue Portal</h2>
+      <h2 style={{ textAlign: "center", marginBottom: "3rem" }}>
+        Rescue Portal
+      </h2>
       <div className="rescue-content">
         <div className="emergency-contacts">
           <h3>Emergency Contacts</h3>
@@ -16,7 +18,9 @@ export default function Rescue() {
             <MapPin size={20} />
             <span>Gapali-6, Bhadrapur, Nepal</span>
           </div>
-          <button className="report-btn">Report Emergency</button>
+          {showButton && (
+            <button className="report-btn">Report Emergency</button>
+          )}
         </div>
 
         <div className="instructions">
