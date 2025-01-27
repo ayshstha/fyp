@@ -213,7 +213,7 @@ const Adoption = () => {
   const [selectedDog, setSelectedDog] = useState(null);
 
   return (
-    <div style={{ marginTop: "80px", textAlign: "center" }}>
+    <div style={{ textAlign: "center" }}>
       <AdoptionComponent showButton={false} />
       <section className="available-dogs">
         <h2>Dogs Available for Adoption</h2>
