@@ -99,6 +99,34 @@ const Blog = () => {
           </div>
         </section>
 
+        <section className="location" id="location">
+          <h2 className="section-title">Where Are We Located?</h2>
+          <div className="location-container">
+            <div className="location-details">
+              <h3>Contact Us</h3>
+              <p>
+                <strong>Phone:</strong> 01-9893244
+              </p>
+              <p>
+                <strong>Email:</strong> info@pawfinder.com
+              </p>
+              <p>
+                <strong>Address:</strong> Gapali-6, Bhadrapur, Nepal
+              </p>
+            </div>
+            <div className="location-map">
+              <iframe
+                title="Vet for Your Pet Location"
+                src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d3533.6623039870165!2d85.4245952!3d27.6659179!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eb1aa647a21f4f%3A0x3e7f525049cc9eb4!2sVet%20for%20Your%20Pet%20-%20the%20Animals%E2%80%99%20Clinic!5e0!3m2!1sen!2snp!4v1737965287085!5m2!1sen!2snp"
+                width="100%"
+                height="250"
+                allowFullScreen=""
+                loading="lazy"
+              ></iframe>
+            </div>
+          </div>
+        </section>
+        
         <section className="services" id="services">
           <h2 className="section-title">Our Services</h2>
           <div className="services-grid">
@@ -192,6 +220,7 @@ const Blog = () => {
                   "Safe treats and supplements",
                 ],
               },
+
               {
                 icon: FirstAid,
                 title: "Health Monitoring",

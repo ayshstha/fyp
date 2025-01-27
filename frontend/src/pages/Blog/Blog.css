@@ -196,7 +196,46 @@
     font-size: 1.2rem;
     font-weight: bold;
 }
+/* Location Section */
+.location-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #efeeee;
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
 
+.location-details {
+    width: 45%;
+    text-align: left;
+}
+
+.location-details h3 {
+    font-size: 1.5rem;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.location-details p {
+    font-size: 1rem;
+    color: #444;
+    margin: 5px 0;
+}
+
+.location-map {
+    width: 50%;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.location-map iframe {
+    border: none;
+    border-radius: 10px;
+}
 /* Services Grid */
 .services-grid,
 .care-grid {

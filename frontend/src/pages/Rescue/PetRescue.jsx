@@ -64,7 +64,6 @@ const PetRescue = () => {
 
   return (
     <div className="rescue-container">
-      <Rescue showButton={false} />
       {/* Intro Section */}
       <section className="rescue-intro">
         <div className="intro-content">
@@ -78,7 +77,7 @@ const PetRescue = () => {
           </button>
         </div>
       </section>
-
+      <Rescue showButton={false} />
       {/* Video Section */}
       <section className="video-section">
         <h2>See Our Rescue Work</h2>
