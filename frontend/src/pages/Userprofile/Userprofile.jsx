@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./UserProfile.css";
-import { User, Calendar, PawPrint, Lock, Edit } from "lucide-react";
+import { User, Calendar, PawPrint, Lock, Edit, Settings } from "lucide-react";
 
 const UserProfile = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -56,6 +56,8 @@ const UserProfile = () => {
         return <div className="tab-content">Appointment History</div>;
       case "adoptions":
         return <div className="tab-content">Adoption History</div>;
+      case "editProfile":
+        return <div className="tab-content">Edit Profile</div>;
       case "password":
         return <div className="tab-content">Change Password</div>;
       default:
@@ -88,6 +90,15 @@ const UserProfile = () => {
         >
           <PawPrint size={20} />
           Adoption History
+        </button>
+        <button
+          className={`sidebar-btn ${
+            activeTab === "editProfile" ? "active" : ""
+          }`}
+          onClick={() => setActiveTab("editProfile")}
+        >
+          <Settings size={20} />
+          Edit Profile
         </button>
         <button
           className={`sidebar-btn ${activeTab === "password" ? "active" : ""}`}
