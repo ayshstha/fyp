@@ -52,6 +52,11 @@ export default function Navbar() {
             Blog
           </Link>
         </li>
+        <li>
+          <Link to="/userprofile" onClick={closeMenu}>
+            Profile
+          </Link>
+        </li>
       </ul>
 
       {/* Sign-in button, remains outside the menu */}

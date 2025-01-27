@@ -12,6 +12,7 @@ import Rescue from "./pages/Rescue/PetRescue";
 import Appointment from "./pages/Appointments/Appointment";
 import Blog from "./pages/Blog/Blog";
 import Adoption from "./pages/Adoption/Adoption";
+import Userprofile from "./pages/Userprofile/Userprofile";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -23,6 +24,7 @@ const router = createBrowserRouter(
       <Route path="/blog" element={<Blog />} />
       <Route path="/appointments" element={<Appointment />} />
       <Route path="/adoption" element={<Adoption />} />
+      <Route path="/userprofile" element={<Userprofile />} />
     </Route>
   )
 );
