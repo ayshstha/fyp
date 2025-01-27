@@ -1,35 +1,74 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./Register.css";
 import { useForm } from "react-hook-form";
-
-import { data, useNavigate } from "react-router-dom";
-import Login from "../Login/Login";
+import AxiosInstance from "../../components/AxiosInstance.jsx"; // Assuming AxiosInstance is set up for your API
+import { useNavigate } from "react-router-dom";
 
 const Register = () => {
   const navigate = useNavigate();
-
+  const { handleSubmit, control, register } = useForm();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [csrfToken, setCsrfToken] = useState(null); // State to store CSRF token
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  // Fetch CSRF token when the component mounts
+  useEffect(() => {
+    const fetchCSRFToken = async () => {
+      try {
+        const response = await AxiosInstance.get('/csrf/'); // Request CSRF token from backend
+        setCsrfToken(response.data.csrfToken); // Store CSRF token in state
+      } catch (error) {
+        console.error("Error fetching CSRF token:", error);
+        alert("Failed to fetch CSRF token.");
+      }
+    };
+    fetchCSRFToken();
+  }, []);
+
+  // Handle form submission
+  const submission = (data) => {
     if (password !== confirmPassword) {
-      alert("Passwords do not match!");
+      alert("Passwords do not match.");
       return;
     }
-    console.log("Registration submitted!");
+
+    if (!csrfToken) {
+      alert("CSRF token is missing.");
+      return;
+    }
+
+    // Make POST request to register user with CSRF token in headers
+    AxiosInstance.post(
+      "/register/",  // Ensure this is the correct API endpoint
+      {
+        email: data.email,
+        password: data.password,
+      },
+      {
+        headers: {
+          "X-CSRFToken": csrfToken,  // Add CSRF token to the request headers
+        },
+      }
+    )
+      .then(() => {
+        navigate("/"); // Redirect to home page after successful registration
+      })
+      .catch((error) => {
+        if (error.response) {
+          console.log("Error Response:", error.response.data);
+          alert(error.response.data.detail || "Registration failed.");
+        } else if (error.request) {
+          console.log("No response received:", error.request);
+          alert("No response from the server.");
+        } else {
+          console.log("Error message:", error.message);
+          alert("An unexpected error occurred.");
+        }
+      });
   };
 
-  const submission = (data) => {
-    AxiosInstance.post("Register/", {
-      email: data.email,
-      password: data.password,
-    }).then(() => {
-      navigate("Login/");
-    });
-  };
   return (
     <div className="register-container">
       <form onSubmit={handleSubmit(submission)}>
@@ -41,96 +80,63 @@ const Register = () => {
           <div className="register-form-section">
             <h2>Register</h2>
 
-            <form onSubmit={handleSubmit}>
-              <div className="form-group image-upload">
-                <div className="upload-placeholder">
-                  <input type="file" id="profilePic" accept="image/*" />
-                </div>
-              </div>
+            <div className="form-group">
+              <label htmlFor="email">Email address</label>
+              <input
+                label={"email"}
+                name={"email"}
+                {...register("email")}
+                type="email"
+                id="email"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
 
-              <div className="form-group">
-                <label htmlFor="fullName">Enter your full name</label>
+            <div className="form-group password-group">
+              <label htmlFor="password">Password</label>
+              <div className="password-wrapper">
                 <input
-                  type="text"
-                  id="fullName"
-                  placeholder="Enter your full name"
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  name={"password"}
+                  {...register("password")}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="toggle-password"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+            </div>
+
+            <div className="form-group password-group">
+              <label htmlFor="confirmPassword">Confirm Password</label>
+              <div className="password-wrapper">
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  name={"confirmPassword"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm your password"
                   required
                 />
               </div>
+            </div>
 
-              <div className="form-group">
-                <label htmlFor="number">Enter your number</label>
-                <input
-                  type="tel"
-                  id="number"
-                  placeholder="Enter your number"
-                  required
-                />
-              </div>
+            <button type="submit" className="register-btn">
+              Register
+            </button>
 
-              <div className="form-group">
-                <label htmlFor="email">Email address</label>
-                <input
-                  label={"email"}
-                  name={"email"}
-                  control={control}
-                  type="email"
-                  id="email"
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
-
-              <div className="form-group password-group">
-                <label htmlFor="password">Password</label>
-                <div className="password-wrapper">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    id="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="toggle-password"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
-                </div>
-              </div>
-
-              <div className="form-group password-group">
-                <label htmlFor="confirmPassword">Confirm Password</label>
-                <div className="password-wrapper">
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    id="confirmPassword"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm your password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="toggle-password"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
-                    {showConfirmPassword ? "Hide" : "Show"}
-                  </button>
-                </div>
-              </div>
-
-              <button type="submit" className="register-btn">
-                Register
-              </button>
-
-              <p className="login-prompt">
-                Already have an account? <a href="/login">Login here</a>
-              </p>
-            </form>
+            <p className="login-prompt">
+              Already have an account? <a href="/login">Login here</a>
+            </p>
           </div>
         </div>
       </form>
