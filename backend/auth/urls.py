@@ -4,4 +4,6 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('users.urls')),  # Corrected this line
+    path('api/auth/', include('knox.urls')),
+
 ]

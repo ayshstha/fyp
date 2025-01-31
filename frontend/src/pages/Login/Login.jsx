@@ -1,14 +1,31 @@
 import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+import AxiosInstance from "../../components/AxiosInstance.jsx";
+
 import "./Login.css";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+  const { handleSubmit, register } = useForm();
   const [showPassword, setShowPassword] = useState(false);
+  const [showMessage, setShowMessage] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Login submitted:", { email, password });
+  const submission = (data) => {
+    AxiosInstance.post("login/", {
+      email: data.email,
+      password: data.password,
+    })
+      .then((response) => {
+        console.log(response);
+        localStorage.setItem("Token", response.data.token);
+        window.dispatchEvent(new Event("storage")); // Notify token update
+        navigate("/home");
+      })
+      .catch((error) => {
+        setShowMessage(true);
+        console.error("Error during login", error);
+      });
   };
 
   return (
@@ -21,14 +38,20 @@ const Login = () => {
         <div className="login-form-section">
           <h2>Login Account</h2>
 
-          <form onSubmit={handleSubmit}>
+          {showMessage && (
+            <div className="error-message">
+              Login has failed, please try again or reset your password.
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit(submission)}>
             <div className="form-group">
               <label htmlFor="email">Email address</label>
               <input
                 type="email"
                 id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                name="email"
+                {...register("email", { required: true })}
                 placeholder="Enter your email"
                 required
               />
@@ -40,8 +63,8 @@ const Login = () => {
                 <input
                   type={showPassword ? "text" : "password"}
                   id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  name="password"
+                  {...register("password", { required: true })}
                   placeholder="Enter your password"
                   required
                 />

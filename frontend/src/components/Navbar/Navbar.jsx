@@ -1,18 +1,38 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./Navbar.css";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("Token"));
 
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Toggle the menu on button click
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   // Close the menu when a link is clicked
   const closeMenu = () => setIsMenuOpen(false);
+
+  // Logout function
+  const logout = () => {
+    localStorage.removeItem("Token");
+    window.dispatchEvent(new Event("storage")); // Notify token update
+    setIsLoggedIn(false);
+    navigate("/login");
+  };
+
+  // Listen for login/logout state changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setIsLoggedIn(!!localStorage.getItem("Token"));
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
 
   return (
     <nav className="navbar">
@@ -59,10 +79,12 @@ export default function Navbar() {
         </li>
       </ul>
 
-      {/* Sign-in button, remains outside the menu */}
-      <Link to="/login">
-        <button className="signup-btn">Sign In</button>
-      </Link>
+      {/* Logout Button */}
+      {isLoggedIn && (
+        <button className="logout-btn" onClick={logout}>
+          Logout
+        </button>
+      )}
     </nav>
   );
 }
