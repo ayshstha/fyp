@@ -1,70 +1,70 @@
 import React, { useState, useEffect } from "react";
-import "./Register.css";
 import { useForm } from "react-hook-form";
-import AxiosInstance from "../../components/AxiosInstance.jsx"; // Assuming AxiosInstance is set up for your API
+import AxiosInstance from "../../components/AxiosInstance.jsx";
 import { useNavigate } from "react-router-dom";
+import "./Register.css";
 
 const Register = () => {
   const navigate = useNavigate();
-  const { handleSubmit, control, register } = useForm();
+  const { handleSubmit, register } = useForm();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [csrfToken, setCsrfToken] = useState(null); // State to store CSRF token
+  const [csrfToken, setCsrfToken] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [csrfError, setCsrfError] = useState("");
 
-  // Fetch CSRF token when the component mounts
   useEffect(() => {
     const fetchCSRFToken = async () => {
       try {
-        const response = await AxiosInstance.get('/csrf/'); // Request CSRF token from backend
-        setCsrfToken(response.data.csrfToken); // Store CSRF token in state
+        const response = await AxiosInstance.get("/csrf/");
+        setCsrfToken(response.data.csrfToken);
+        setCsrfError("");
       } catch (error) {
         console.error("Error fetching CSRF token:", error);
-        alert("Failed to fetch CSRF token.");
+        setCsrfError("Failed to fetch CSRF token. Please try again.");
       }
     };
     fetchCSRFToken();
   }, []);
 
-  // Handle form submission
   const submission = (data) => {
+    setErrorMessage("");
+    setCsrfError("");
+
     if (password !== confirmPassword) {
-      alert("Passwords do not match.");
+      setErrorMessage("Passwords do not match.");
       return;
     }
 
     if (!csrfToken) {
-      alert("CSRF token is missing.");
+      setCsrfError("CSRF token is missing. Please refresh the page.");
       return;
     }
 
-    // Make POST request to register user with CSRF token in headers
-    AxiosInstance.post(
-      "/register/",  // Ensure this is the correct API endpoint
-      {
-        email: data.email,
-        password: data.password,
+    const formData = new FormData();
+    formData.append("email", data.email);
+    formData.append("password", data.password);
+    formData.append("full_name", data.full_name);
+    formData.append("phone_number", data.phone_number);
+
+    AxiosInstance.post("/register/", formData, {
+      headers: {
+        "X-CSRFToken": csrfToken,
+        "Content-Type": "multipart/form-data",
       },
-      {
-        headers: {
-          "X-CSRFToken": csrfToken,  // Add CSRF token to the request headers
-        },
-      }
-    )
+    })
       .then(() => {
-        navigate("/"); // Redirect to home page after successful registration
+        navigate("/");
       })
       .catch((error) => {
         if (error.response) {
-          console.log("Error Response:", error.response.data);
-          alert(error.response.data.detail || "Registration failed.");
+          setErrorMessage(error.response.data.detail || "Registration failed.");
         } else if (error.request) {
-          console.log("No response received:", error.request);
-          alert("No response from the server.");
+          setErrorMessage("No response from the server. Please try again.");
         } else {
-          console.log("Error message:", error.message);
-          alert("An unexpected error occurred.");
+          setErrorMessage("An unexpected error occurred.");
         }
       });
   };
@@ -72,72 +72,99 @@ const Register = () => {
   return (
     <div className="register-container">
       <form onSubmit={handleSubmit(submission)}>
-        <div className="register-background"></div>
+        <div className="register-form-section">
+          <h2>Register</h2>
 
-        <div className="register-content">
-          <div className="register-image-section"></div>
+          {csrfError && <p className="error-message">{csrfError}</p>}
+          {errorMessage && <p className="error-message">{errorMessage}</p>}
 
-          <div className="register-form-section">
-            <h2>Register</h2>
+          <div className="form-group">
+            <label htmlFor="full_name">Full Name</label>
+            <input
+              name="full_name"
+              {...register("full_name")}
+              type="text"
+              id="full_name"
+              placeholder="Enter your full name"
+              required
+            />
+          </div>
 
-            <div className="form-group">
-              <label htmlFor="email">Email address</label>
+          <div className="form-group">
+            <label htmlFor="phone_number">Phone Number</label>
+            <input
+              name="phone_number"
+              {...register("phone_number")}
+              type="tel"
+              id="phone_number"
+              placeholder="Enter your phone number"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="email">Email address</label>
+            <input
+              name="email"
+              {...register("email")}
+              type="email"
+              id="email"
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+
+          <div className="form-group password-group">
+            <label htmlFor="password">Password</label>
+            <div className="password-wrapper">
               <input
-                label={"email"}
-                name={"email"}
-                {...register("email")}
-                type="email"
-                id="email"
-                placeholder="Enter your email"
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                {...register("password")}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
                 required
               />
+              <button
+                type="button"
+                className="toggle-password"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
             </div>
-
-            <div className="form-group password-group">
-              <label htmlFor="password">Password</label>
-              <div className="password-wrapper">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  name={"password"}
-                  {...register("password")}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                />
-                <button
-                  type="button"
-                  className="toggle-password"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? "Hide" : "Show"}
-                </button>
-              </div>
-            </div>
-
-            <div className="form-group password-group">
-              <label htmlFor="confirmPassword">Confirm Password</label>
-              <div className="password-wrapper">
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  name={"confirmPassword"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm your password"
-                  required
-                />
-              </div>
-            </div>
-
-            <button type="submit" className="register-btn">
-              Register
-            </button>
-
-            <p className="login-prompt">
-              Already have an account? <a href="/login">Login here</a>
-            </p>
           </div>
+
+          <div className="form-group password-group">
+            <label htmlFor="confirmPassword">Confirm Password</label>
+            <div className="password-wrapper">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                id="confirmPassword"
+                name="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm your password"
+                required
+              />
+              <button
+                type="button"
+                className="toggle-password"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? "Hide" : "Show"}
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" className="register-btn">
+            Register
+          </button>
+
+          <p className="login-prompt">
+            Already have an account? <a href="/login">Login here</a>
+          </p>
         </div>
       </form>
     </div>

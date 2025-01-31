@@ -9,13 +9,9 @@ export default function MyTextField(props) {
     <Controller
       name={name}
       control={control}
-      render={({
-        field: { onChange, value },
-        fieldState: { error },
-        formState,
-      }) => (
+      render={({ field: { onChange, value }, fieldState: { error } }) => (
         <TextField
-          id="outlined-basic"
+          id={`outlined-${name}`}
           onChange={onChange}
           value={value}
           label={label}

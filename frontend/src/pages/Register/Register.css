@@ -1,162 +1,71 @@
 .register-container {
-    min-height: 55vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    position: relative;
-}
-
-.register-background {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: url('/registerdog.jpg');
-    background-size: cover;
-    background-position: center;
-    filter: blur(5px);
-    z-index: 0;
-}
-
-.register-content {
-    display: flex;
-    background: white;
-    border-radius: 20px;
-    overflow: hidden;
-    width: 100%;
-    max-width: 1000px;
-    min-height: 600px;
-    position: relative;
-    z-index: 1;
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-}
-
-.register-image-section {
-    flex: 1;
-    background-image: url('/registerdog.jpg');
-    background-size: cover;
-    background-position: center;
+    max-width: 500px;
+    margin: auto;
+    padding: 50px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
 }
 
 .register-form-section {
-    flex: 1;
-    padding: 3rem;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.95);
+    align-items: center;
 }
 
-.register-form-section h2 {
-    font-size: 2rem;
-    color: #2d3436;
-    margin-bottom: 2rem;
+h2 {
+    margin-bottom: 20px;
 }
 
 .form-group {
-    margin-bottom: 1.6rem;
+    width: 100%;
+    margin-bottom: 15px;
 }
 
-.image-upload .upload-placeholder {
-    width: 100px;
-    height: 100px;
-    background: #e9ecef;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-    color: #636e72;
-    margin: 0 auto 1.6rem;
-    cursor: pointer;
-    border: 2px dashed #636e72;
-}
-
-.form-group label {
+label {
+    font-weight: bold;
     display: block;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
+    margin-bottom: 5px;
 }
 
-.form-group input {
+input {
     width: 100%;
-    padding: 0.75rem;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: border-color 0.3s ease;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
 }
 
-.form-group input:focus {
-    outline: none;
-    border-color: #00b894;
+.image-upload {
+    text-align: center;
+    margin-bottom: 20px;
 }
 
-
-.register-btn {
-    width: 100%;
-    padding: 1rem;
-    background: #00b894;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
+.image-label {
+    display: inline-block;
+    padding: 15px;
+    background: #eee;
+    border-radius: 50%;
     cursor: pointer;
-    transition: background 0.3s ease;
-    margin-top: 1rem;
-}
-
-.register-btn:hover {
-    background: #067d65;
-}
-
-.login-prompt {
-    margin-top: 1.5rem;
-    font-size: 0.9rem;
     text-align: center;
 }
 
-.login-prompt a {
-    color: #00b894;
-    text-decoration: none;
-    font-weight: 600;
-}
-.password-wrapper {
-    display: flex;
-    align-items: center;
-    position: relative;
+.profile-preview {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
-.password-wrapper input {
-    flex: 1;
-    padding-right: 4rem;
-    /* Space for the toggle button */
+.image-input {
+    display: none;
 }
 
-.toggle-password {
-    position: absolute;
-    right: 1rem;
-    background: none;
+.register-btn {
+    width: 100%;
+    padding: 10px;
+    background: green;
+    color: white;
     border: none;
-    font-size: 0.9rem;
-    font-weight: bold;
-    color: #007bff;
+    border-radius: 5px;
     cursor: pointer;
-}
-
-.toggle-password:hover {
-    color: #0056b3;
-}
-@media (max-width: 768px) {
-    .register-content {
-        flex-direction: column;
-        min-height: auto;
-    }
-
-    .register-image-section {
-        height: 200px;
-    }
 }
