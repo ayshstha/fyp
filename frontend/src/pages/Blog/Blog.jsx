@@ -1,5 +1,4 @@
 import React from "react";
-import Rescue from "../../components/Rescue/Rescue";
 import {
   Heart,
   Users,

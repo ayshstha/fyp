@@ -16,19 +16,13 @@ import Blog from "./pages/Blog/Blog";
 import Adoption from "./pages/Adoption/Adoption";
 import Userprofile from "./pages/Userprofile/Userprofile";
 import ProtectedRoute from "./components/protectedRoutes";
+import PasswordResetRequest from "./pages/PasswordResetRequest/PasswordResetRequest";
+import PasswordReset from "./pages/PasswordReset/PasswordReset";
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("Token"));
 
-  // Listen for token updates (Login/Logout)
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setToken(localStorage.getItem("Token"));
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
+  
 
   const router = createBrowserRouter(
     createRoutesFromElements(
@@ -53,6 +47,8 @@ function App() {
             )
           }
         />
+        <Route path="/request/password_reset" element={<PasswordResetRequest />} />
+        <Route path="/password-reset/:token" element={<PasswordReset />} />
 
         {/* Protected Routes (Only accessible when logged in) */}
         <Route element={<ProtectedRoute />}>
