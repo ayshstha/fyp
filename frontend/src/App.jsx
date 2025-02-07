@@ -1,11 +1,13 @@
-import { Layout } from "./components/Layout/Layout";
-import Home from "./pages/Homepage/Home";
+import React, { useState, useEffect } from "react";
 import {
   RouterProvider,
   createBrowserRouter,
   createRoutesFromElements,
   Route,
+  Navigate,
 } from "react-router-dom";
+import { Layout } from "./components/Layout/Layout";
+import Home from "./pages/Homepage/Home";
 import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
 import Rescue from "./pages/Rescue/PetRescue";
@@ -13,23 +15,56 @@ import Appointment from "./pages/Appointments/Appointment";
 import Blog from "./pages/Blog/Blog";
 import Adoption from "./pages/Adoption/Adoption";
 import Userprofile from "./pages/Userprofile/Userprofile";
-
-const router = createBrowserRouter(
-  createRoutesFromElements(
-    <Route path="/" element={<Layout />}>
-      <Route index element={<Home />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/rescue" element={<Rescue />} />
-      <Route path="/blog" element={<Blog />} />
-      <Route path="/appointments" element={<Appointment />} />
-      <Route path="/adoption" element={<Adoption />} />
-      <Route path="/userprofile" element={<Userprofile />} />
-    </Route>
-  )
-);
+import ProtectedRoute from "./components/protectedRoutes";
+import PasswordResetRequest from "./pages/PasswordResetRequest/PasswordResetRequest";
+import PasswordReset from "./pages/PasswordReset/PasswordReset";
 
 function App() {
+  const [token, setToken] = useState(localStorage.getItem("Token"));
+
+  
+
+  const router = createBrowserRouter(
+    createRoutesFromElements(
+      <>
+        {/* Default redirect to login */}
+        <Route path="/" element={<Navigate to="/login" />} />
+
+        {/* Public Routes (Redirect logged-in users) */}
+        <Route
+          path="/login"
+          element={
+            !localStorage.getItem("Token") ? <Login /> : <Navigate to="/home" />
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            !localStorage.getItem("Token") ? (
+              <Register />
+            ) : (
+              <Navigate to="/home" />
+            )
+          }
+        />
+        <Route path="/request/password_reset" element={<PasswordResetRequest />} />
+        <Route path="/password-reset/:token" element={<PasswordReset />} />
+
+        {/* Protected Routes (Only accessible when logged in) */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<Layout />}>
+            <Route path="/home" element={<Home />} />
+            <Route path="/rescue" element={<Rescue />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/appointments" element={<Appointment />} />
+            <Route path="/adoption" element={<Adoption />} />
+            <Route path="/userprofile" element={<Userprofile />} />
+          </Route>
+        </Route>
+      </>
+    )
+  );
+
   return <RouterProvider router={router} />;
 }
 

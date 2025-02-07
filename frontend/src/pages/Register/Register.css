@@ -1,5 +1,13 @@
+/* Ensure full-page coverage */
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
 .register-container {
-    min-height: 55vh;
+    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -7,6 +15,7 @@
     position: relative;
 }
 
+/* Background Blur Effect */
 .register-background {
     position: absolute;
     top: 0;
@@ -16,23 +25,26 @@
     background-image: url('/registerdog.jpg');
     background-size: cover;
     background-position: center;
-    filter: blur(5px);
+    filter: blur(6px);
     z-index: 0;
 }
 
+/* Main Content Styling */
 .register-content {
     display: flex;
     background: white;
     border-radius: 20px;
     overflow: hidden;
-    width: 100%;
-    max-width: 1000px;
-    min-height: 600px;
+    width: 90%;
+    max-width: 1100px;
+    min-height: 650px;
     position: relative;
     z-index: 1;
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    animation: fadeIn 1s ease-in-out;
 }
 
+/* Left Side Image */
 .register-image-section {
     flex: 1;
     background-image: url('/registerdog.jpg');
@@ -40,116 +52,117 @@
     background-position: center;
 }
 
+/* Right Side Form */
 .register-form-section {
     flex: 1;
     padding: 3rem;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.97);
 }
 
 .register-form-section h2 {
-    font-size: 2rem;
+    font-size: 2.2rem;
     color: #2d3436;
     margin-bottom: 2rem;
+    text-align: center;
 }
 
-.form-group {
-    margin-bottom: 1.6rem;
-}
-
-.image-upload .upload-placeholder {
-    width: 100px;
-    height: 100px;
-    background: #e9ecef;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-    color: #636e72;
-    margin: 0 auto 1.6rem;
-    cursor: pointer;
-    border: 2px dashed #636e72;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-}
-
-.form-group input {
-    width: 100%;
-    padding: 0.75rem;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
+/* Hover effect for form inputs */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="password"] {
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border-radius: 10px;
+    border: 1px solid #ddd;
     font-size: 1rem;
-    transition: border-color 0.3s ease;
-}
-
-.form-group input:focus {
     outline: none;
-    border-color: #00b894;
+    transition: all 0.3s ease;
 }
 
+input[type="text"]:hover,
+input[type="email"]:hover,
+input[type="tel"]:hover,
+input[type="password"]:hover {
+    border-color: #ff7f50;
+    transform: translateY(-2px);
+}
 
-.register-btn {
-    width: 100%;
-    padding: 1rem;
-    background: #00b894;
-    color: white;
+/* Focus effect for form inputs */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+input[type="password"]:focus {
+    border-color: #ff7f50;
+    box-shadow: 0 0 8px rgba(255, 127, 80, 0.6);
+}
+
+/* Password show/hide button */
+.toggle-password {
+    background: none;
     border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
+    color: #2d3436;
     cursor: pointer;
-    transition: background 0.3s ease;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+}
+
+.toggle-password:hover {
+    color: #ff7f50;
+}
+
+/* Register Button Styling */
+.register-btn {
+    background-color: #ff7f50;
+    color: white;
+    padding: 0.8rem 2rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
     margin-top: 1rem;
 }
 
 .register-btn:hover {
-    background: #067d65;
+    background-color: #e67e22;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-.login-prompt {
+.register-btn:active {
+    transform: translateY(1px);
+}
+
+/* Register Button Focus Effect */
+.register-btn:focus {
+    outline: none;
+    box-shadow: 0 0 8px rgba(255, 127, 80, 0.6);
+}
+
+/* Login Links */
+.login-links {
     margin-top: 1.5rem;
-    font-size: 0.9rem;
-    text-align: center;
-}
-
-.login-prompt a {
-    color: #00b894;
-    text-decoration: none;
-    font-weight: 600;
-}
-.password-wrapper {
     display: flex;
-    align-items: center;
-    position: relative;
-}
-
-.password-wrapper input {
-    flex: 1;
-    padding-right: 4rem;
-    /* Space for the toggle button */
-}
-
-.toggle-password {
-    position: absolute;
-    right: 1rem;
-    background: none;
-    border: none;
+    justify-content: center;
     font-size: 0.9rem;
-    font-weight: bold;
-    color: #007bff;
-    cursor: pointer;
 }
 
-.toggle-password:hover {
-    color: #0056b3;
+.login-links a {
+    color: #ff7f50;
+    text-decoration: none;
+    transition: color 0.3s ease;
 }
+
+.login-links a:hover {
+    color: #e67e22;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
     .register-content {
         flex-direction: column;
@@ -158,5 +171,18 @@
 
     .register-image-section {
         height: 200px;
+    }
+}
+
+/* Animation for page load */
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

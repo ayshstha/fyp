@@ -1,18 +1,39 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./Navbar.css";
+import AxiosInstance from "../../components/AxiosInstance.jsx";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("Token"));
 
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Toggle the menu on button click
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   // Close the menu when a link is clicked
   const closeMenu = () => setIsMenuOpen(false);
+
+  // Logout function
+  const logout = () => {
+    AxiosInstance.post(`logoutall/`, {}).then(() => {
+      localStorage.removeItem("Token");
+      navigate("/login");
+    });
+  };
+
+  // Listen for login/logout state changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setIsLoggedIn(!!localStorage.getItem("Token"));
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
 
   return (
     <nav className="navbar">
@@ -28,7 +49,7 @@ export default function Navbar() {
       {/* Links list, shown when the menu is active */}
       <ul className={`nav-links ${isMenuOpen ? "active" : ""}`}>
         <li>
-          <Link to="/" onClick={closeMenu}>
+          <Link to="/home" onClick={closeMenu}>
             Home
           </Link>
         </li>
@@ -59,10 +80,12 @@ export default function Navbar() {
         </li>
       </ul>
 
-      {/* Sign-in button, remains outside the menu */}
-      <Link to="/login">
-        <button className="signup-btn">Sign In</button>
-      </Link>
+      {/* Logout Button */}
+      {isLoggedIn && (
+        <button className="logout-btn" onClick={logout}>
+          Logout
+        </button>
+      )}
     </nav>
   );
 }

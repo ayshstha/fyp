@@ -208,6 +208,7 @@ const Adoption = () => {
     { name: "Golveda", image: "/dogavailable4.jpeg" },
     { name: "Sheru", image: "/dogavailable5.jpeg" },
     { name: "Prabesh", image: "/dogavailable6.jpeg" },
+    { name: "Prabesh", image: "/ai.HEIC" },
   ];
 
   const [selectedDog, setSelectedDog] = useState(null);
