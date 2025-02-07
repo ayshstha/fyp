@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Menu } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./Navbar.css";
+import AxiosInstance from "../../components/AxiosInstance.jsx";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -18,10 +19,10 @@ export default function Navbar() {
 
   // Logout function
   const logout = () => {
-    localStorage.removeItem("Token");
-    window.dispatchEvent(new Event("storage")); // Notify token update
-    setIsLoggedIn(false);
-    navigate("/login");
+    AxiosInstance.post(`logoutall/`, {}).then(() => {
+      localStorage.removeItem("Token");
+      navigate("/login");
+    });
   };
 
   // Listen for login/logout state changes
@@ -48,7 +49,7 @@ export default function Navbar() {
       {/* Links list, shown when the menu is active */}
       <ul className={`nav-links ${isMenuOpen ? "active" : ""}`}>
         <li>
-          <Link to="/" onClick={closeMenu}>
+          <Link to="/home" onClick={closeMenu}>
             Home
           </Link>
         </li>

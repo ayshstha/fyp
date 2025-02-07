@@ -1,71 +1,188 @@
-.register-container {
-    max-width: 500px;
-    margin: auto;
-    padding: 50px;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+/* Ensure full-page coverage */
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
 }
 
+.register-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+}
+
+/* Background Blur Effect */
+.register-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('/registerdog.jpg');
+    background-size: cover;
+    background-position: center;
+    filter: blur(6px);
+    z-index: 0;
+}
+
+/* Main Content Styling */
+.register-content {
+    display: flex;
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    width: 90%;
+    max-width: 1100px;
+    min-height: 650px;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    animation: fadeIn 1s ease-in-out;
+}
+
+/* Left Side Image */
+.register-image-section {
+    flex: 1;
+    background-image: url('/registerdog.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+/* Right Side Form */
 .register-form-section {
+    flex: 1;
+    padding: 3rem;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.97);
 }
 
-h2 {
-    margin-bottom: 20px;
-}
-
-.form-group {
-    width: 100%;
-    margin-bottom: 15px;
-}
-
-label {
-    font-weight: bold;
-    display: block;
-    margin-bottom: 5px;
-}
-
-input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-.image-upload {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.image-label {
-    display: inline-block;
-    padding: 15px;
-    background: #eee;
-    border-radius: 50%;
-    cursor: pointer;
+.register-form-section h2 {
+    font-size: 2.2rem;
+    color: #2d3436;
+    margin-bottom: 2rem;
     text-align: center;
 }
 
-.profile-preview {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    object-fit: cover;
+/* Hover effect for form inputs */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="password"] {
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
 }
 
-.image-input {
-    display: none;
+input[type="text"]:hover,
+input[type="email"]:hover,
+input[type="tel"]:hover,
+input[type="password"]:hover {
+    border-color: #ff7f50;
+    transform: translateY(-2px);
 }
 
-.register-btn {
-    width: 100%;
-    padding: 10px;
-    background: green;
-    color: white;
+/* Focus effect for form inputs */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+input[type="password"]:focus {
+    border-color: #ff7f50;
+    box-shadow: 0 0 8px rgba(255, 127, 80, 0.6);
+}
+
+/* Password show/hide button */
+.toggle-password {
+    background: none;
     border: none;
-    border-radius: 5px;
+    color: #2d3436;
     cursor: pointer;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+}
+
+.toggle-password:hover {
+    color: #ff7f50;
+}
+
+/* Register Button Styling */
+.register-btn {
+    background-color: #ff7f50;
+    color: white;
+    padding: 0.8rem 2rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.register-btn:hover {
+    background-color: #e67e22;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.register-btn:active {
+    transform: translateY(1px);
+}
+
+/* Register Button Focus Effect */
+.register-btn:focus {
+    outline: none;
+    box-shadow: 0 0 8px rgba(255, 127, 80, 0.6);
+}
+
+/* Login Links */
+.login-links {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.login-links a {
+    color: #ff7f50;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.login-links a:hover {
+    color: #e67e22;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .register-content {
+        flex-direction: column;
+        min-height: auto;
+    }
+
+    .register-image-section {
+        height: 200px;
+    }
+}
+
+/* Animation for page load */
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

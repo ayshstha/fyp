@@ -71,102 +71,105 @@ const Register = () => {
 
   return (
     <div className="register-container">
-      <form onSubmit={handleSubmit(submission)}>
+      <div className="register-background"></div>
+
+      <div className="register-content">
+        <div className="register-image-section"></div>
+
         <div className="register-form-section">
-          <h2>Register</h2>
+          <h2>Register Account</h2>
 
-          {csrfError && <p className="error-message">{csrfError}</p>}
-          {errorMessage && <p className="error-message">{errorMessage}</p>}
+          {csrfError && <div className="error-message">{csrfError}</div>}
+          {errorMessage && <div className="error-message">{errorMessage}</div>}
 
-          <div className="form-group">
-            <label htmlFor="full_name">Full Name</label>
-            <input
-              name="full_name"
-              {...register("full_name")}
-              type="text"
-              id="full_name"
-              placeholder="Enter your full name"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="phone_number">Phone Number</label>
-            <input
-              name="phone_number"
-              {...register("phone_number")}
-              type="tel"
-              id="phone_number"
-              placeholder="Enter your phone number"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="email">Email address</label>
-            <input
-              name="email"
-              {...register("email")}
-              type="email"
-              id="email"
-              placeholder="Enter your email"
-              required
-            />
-          </div>
-
-          <div className="form-group password-group">
-            <label htmlFor="password">Password</label>
-            <div className="password-wrapper">
+          <form onSubmit={handleSubmit(submission)}>
+            <div className="form-group">
+              <label htmlFor="full_name">Full Name</label>
               <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                name="password"
-                {...register("password")}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
+                type="text"
+                id="full_name"
+                {...register("full_name", { required: true })}
+                placeholder="Enter your full name"
                 required
               />
-              <button
-                type="button"
-                className="toggle-password"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? "Hide" : "Show"}
-              </button>
             </div>
-          </div>
 
-          <div className="form-group password-group">
-            <label htmlFor="confirmPassword">Confirm Password</label>
-            <div className="password-wrapper">
+            <div className="form-group">
+              <label htmlFor="phone_number">Phone Number</label>
               <input
-                type={showConfirmPassword ? "text" : "password"}
-                id="confirmPassword"
-                name="confirmPassword"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm your password"
+                type="tel"
+                id="phone_number"
+                {...register("phone_number", { required: true })}
+                placeholder="Enter your phone number"
                 required
               />
-              <button
-                type="button"
-                className="toggle-password"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                {showConfirmPassword ? "Hide" : "Show"}
-              </button>
             </div>
-          </div>
 
-          <button type="submit" className="register-btn">
-            Register
-          </button>
+            <div className="form-group">
+              <label htmlFor="email">Email address</label>
+              <input
+                type="email"
+                id="email"
+                {...register("email", { required: true })}
+                placeholder="Enter your email"
+                required
+              />
+            </div>
 
-          <p className="login-prompt">
-            Already have an account? <a href="/login">Login here</a>
-          </p>
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+              <div className="password-wrapper">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  {...register("password", { required: true })}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="toggle-password"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? "hide" : "show"}
+                </button>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Confirm Password</label>
+              <div className="password-wrapper">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  id="confirmPassword"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm your password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="toggle-password"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? "hide" : "show"}
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" className="register-btn">
+              Register
+            </button>
+
+            <div className="login-links">
+              <p className="login-prompt">
+                Already have an account? <a href="/login">Login here</a>
+              </p>
+            </div>
+          </form>
         </div>
-      </form>
+      </div>
     </div>
   );
 };
