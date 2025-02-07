@@ -14,6 +14,7 @@ const Register = () => {
   const [csrfToken, setCsrfToken] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [csrfError, setCsrfError] = useState("");
+  const [profilePicturePreview, setProfilePicturePreview] = useState(null);
 
   useEffect(() => {
     const fetchCSRFToken = async () => {
@@ -28,6 +29,17 @@ const Register = () => {
     };
     fetchCSRFToken();
   }, []);
+
+  const handleProfilePictureChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePicturePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const submission = (data) => {
     setErrorMessage("");
@@ -49,6 +61,10 @@ const Register = () => {
     formData.append("full_name", data.full_name);
     formData.append("phone_number", data.phone_number);
 
+    if (data.profile_picture && data.profile_picture[0]) {
+      formData.append("profile_picture", data.profile_picture[0]);
+    }
+
     AxiosInstance.post("/register/", formData, {
       headers: {
         "X-CSRFToken": csrfToken,
@@ -60,7 +76,12 @@ const Register = () => {
       })
       .catch((error) => {
         if (error.response) {
-          setErrorMessage(error.response.data.detail || "Registration failed.");
+          // Handle duplicate email error
+          if (error.response.data.email) {
+            setErrorMessage(error.response.data.email[0]); // Display the email validation error
+          } else {
+            setErrorMessage(error.response.data.detail || "Registration failed.");
+          }
         } else if (error.request) {
           setErrorMessage("No response from the server. Please try again.");
         } else {
@@ -83,6 +104,31 @@ const Register = () => {
           {errorMessage && <div className="error-message">{errorMessage}</div>}
 
           <form onSubmit={handleSubmit(submission)}>
+            {/* Profile Picture Field with Preview */}
+            <div className="profile-picture-container">
+              <label htmlFor="profile_picture" className="profile-picture-label">
+                <div className="profile-picture-preview">
+                  {profilePicturePreview ? (
+                    <img
+                      src={profilePicturePreview}
+                      alt="Profile Preview"
+                      className="profile-picture-image"
+                    />
+                  ) : (
+                    <span>Choose Photo</span>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  id="profile_picture"
+                  accept="image/*"
+                  {...register("profile_picture")}
+                  onChange={handleProfilePictureChange}
+                  style={{ display: "none" }}
+                />
+              </label>
+            </div>
+
             <div className="form-group">
               <label htmlFor="full_name">Full Name</label>
               <input

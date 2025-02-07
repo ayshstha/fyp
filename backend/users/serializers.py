@@ -15,15 +15,16 @@ class LoginSerializer(serializers.Serializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.ImageField(required=False)  # New field
+
     class Meta:
         model = User
-        fields = ('id', 'email', 'password', 'full_name', 'phone_number', )  # Include all necessary fields
+        fields = ('id', 'email', 'password', 'full_name', 'phone_number', 'profile_picture')  
         extra_kwargs = {
-            'password': {'write_only': True},  # Ensure password is write-only
+            'password': {'write_only': True},
         }
+    
 
     def create(self, validated_data):
-        # Hash the password before saving the user
         validated_data['password'] = make_password(validated_data['password'])
-        user = User.objects.create(**validated_data)
-        return user
+        return User.objects.create(**validated_data)

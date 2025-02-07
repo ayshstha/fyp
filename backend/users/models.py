@@ -37,6 +37,7 @@ class CustomUser(AbstractUser):
     full_name = models.CharField(max_length=255, blank=True, null=True)  # Full name field
     phone_number = models.CharField(max_length=15, blank=True, null=True)  # Phone number field
 
+    profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
     # Override first_name and last_name to be nullable
     first_name = models.CharField(max_length=30, blank=True, null=True)
     last_name = models.CharField(max_length=30, blank=True, null=True)
