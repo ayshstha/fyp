@@ -1,4 +1,7 @@
 from django.shortcuts import render
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+
 from .serializers import *
 from .models import *
 from rest_framework import viewsets, permissions
@@ -66,3 +69,32 @@ class UserViewset(viewsets.ViewSet):
         queryset = User.objects.all()
         serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data)
+
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+
+    def get(self, request):
+        # Access the currently authenticated user
+        user = request.user
+
+        # Optionally, if you have a related profile model, you can include that data as well
+        # Assuming you have a `Profile` model related to the User model with additional fields like phone
+        try:
+            profile_picture_url = request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None
+
+            return Response({
+                "name": user.full_name,  # Full name from the user
+                "email": user.email,  # Email from the user
+                "phone": user.phone_number if user.phone_number else None,  # Example of using profile fields
+                "profile_picture": profile_picture_url,
+            })
+        except Exception as e:
+            return Response({"error": "User profile not found."}, status=404)
+
