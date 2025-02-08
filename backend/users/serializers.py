@@ -14,17 +14,27 @@ class LoginSerializer(serializers.Serializer):
         return ret
 
 
+from rest_framework import serializers
+from django.contrib.auth.hashers import make_password
+from .models import CustomUser  # Import your CustomUser model
+
+
 class RegisterSerializer(serializers.ModelSerializer):
-    profile_picture = serializers.ImageField(required=False)  # New field
+    profile_picture = serializers.ImageField(required=False)  # Optional field
 
     class Meta:
-        model = User
-        fields = ('id', 'email', 'password', 'full_name', 'phone_number', 'profile_picture')  
+        model = CustomUser
+        fields = ('id', 'email', 'password', 'full_name', 'phone_number', 'profile_picture')
         extra_kwargs = {
             'password': {'write_only': True},
         }
-    
 
     def create(self, validated_data):
+        # Hash the password
         validated_data['password'] = make_password(validated_data['password'])
-        return User.objects.create(**validated_data)
+
+        # Create the user
+        user = CustomUser.objects.create(**validated_data)
+
+        return user
+

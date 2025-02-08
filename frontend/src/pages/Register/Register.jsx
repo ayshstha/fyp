@@ -6,7 +6,7 @@ import "./Register.css";
 
 const Register = () => {
   const navigate = useNavigate();
-  const { handleSubmit, register } = useForm();
+  const { handleSubmit, register, setValue, watch } = useForm();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -16,6 +16,7 @@ const Register = () => {
   const [csrfError, setCsrfError] = useState("");
   const [profilePicturePreview, setProfilePicturePreview] = useState(null);
 
+  // Fetch CSRF Token
   useEffect(() => {
     const fetchCSRFToken = async () => {
       try {
@@ -30,64 +31,58 @@ const Register = () => {
     fetchCSRFToken();
   }, []);
 
+  // Register profile_picture field explicitly
+  useEffect(() => {
+    register("profile_picture");
+  }, [register]);
+
+  // Handle Profile Picture Change
   const handleProfilePictureChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfilePicturePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+      setValue("profile_picture", [file]); // Store file in form state
+      setProfilePicturePreview(URL.createObjectURL(file)); // Show preview
+      console.log("Profile picture selected:", file.name);
+    } else {
+      console.log("No profile picture selected");
     }
   };
 
-  const submission = (data) => {
-    setErrorMessage("");
-    setCsrfError("");
-
-    if (password !== confirmPassword) {
-      setErrorMessage("Passwords do not match.");
-      return;
-    }
-
-    if (!csrfToken) {
-      setCsrfError("CSRF token is missing. Please refresh the page.");
-      return;
-    }
-
+  // Submit Form Data
+  const submission = async (data) => {
     const formData = new FormData();
     formData.append("email", data.email);
     formData.append("password", data.password);
     formData.append("full_name", data.full_name);
     formData.append("phone_number", data.phone_number);
 
-    if (data.profile_picture && data.profile_picture[0]) {
-      formData.append("profile_picture", data.profile_picture[0]);
+    // Retrieve the file from the form state
+    const profilePictureFiles = watch("profile_picture");
+    if (profilePictureFiles && profilePictureFiles.length > 0) {
+      formData.append("profile_picture", profilePictureFiles[0]);
+      console.log("Profile picture file:", profilePictureFiles[0]); // Debugging
+    } else {
+      console.log("No profile picture selected"); // Debugging
     }
 
-    AxiosInstance.post("/register/", formData, {
-      headers: {
-        "X-CSRFToken": csrfToken,
-        "Content-Type": "multipart/form-data",
-      },
-    })
-      .then(() => {
-        navigate("/");
-      })
-      .catch((error) => {
-        if (error.response) {
-          // Handle duplicate email error
-          if (error.response.data.email) {
-            setErrorMessage(error.response.data.email[0]); // Display the email validation error
-          } else {
-            setErrorMessage(error.response.data.detail || "Registration failed.");
-          }
-        } else if (error.request) {
-          setErrorMessage("No response from the server. Please try again.");
-        } else {
-          setErrorMessage("An unexpected error occurred.");
-        }
+    // Debugging: Log FormData contents
+    for (let pair of formData.entries()) {
+      console.log(pair[0], pair[1]);
+    }
+
+    try {
+      const response = await AxiosInstance.post("/register/", formData, {
+        headers: {
+          "X-CSRFToken": csrfToken,
+          "Content-Type": "multipart/form-data",
+        },
       });
+      console.log("Success:", response.data);
+      navigate("/");
+    } catch (error) {
+      console.error("Registration error:", error);
+      setErrorMessage(error.response?.data?.detail || "Registration failed.");
+    }
   };
 
   return (
@@ -104,7 +99,6 @@ const Register = () => {
           {errorMessage && <div className="error-message">{errorMessage}</div>}
 
           <form onSubmit={handleSubmit(submission)}>
-            {/* Profile Picture Field with Preview */}
             <div className="profile-picture-container">
               <label htmlFor="profile_picture" className="profile-picture-label">
                 <div className="profile-picture-preview">
@@ -122,7 +116,6 @@ const Register = () => {
                   type="file"
                   id="profile_picture"
                   accept="image/*"
-                  {...register("profile_picture")}
                   onChange={handleProfilePictureChange}
                   style={{ display: "none" }}
                 />
