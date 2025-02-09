@@ -18,11 +18,19 @@ export default function Navbar() {
   const closeMenu = () => setIsMenuOpen(false);
 
   // Logout function
-  const logout = () => {
-    AxiosInstance.post(`logoutall/`, {}).then(() => {
-      localStorage.removeItem("Token");
-      navigate("/login");
-    });
+  const logout = async () => {
+    // Remove token immediately to reflect logout status
+    localStorage.removeItem("Token");
+    setIsLoggedIn(false); // Update state immediately
+
+    try {
+      await AxiosInstance.post("logoutall/"); // Logout API request
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+
+    navigate("/login"); // Redirect to login page
+    window.location.reload(); // Force a page refresh to clear any cached state
   };
 
   // Listen for login/logout state changes
@@ -37,7 +45,7 @@ export default function Navbar() {
 
   return (
     <nav className="navbar">
-      <a href="/" className="logo">
+      <a href="/home" className="logo">
         <img src="/public/Logo.JPG" alt="Logo" />
       </a>
 

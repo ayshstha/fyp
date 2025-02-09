@@ -19,7 +19,7 @@ AxiosInstance.interceptors.request.use((config) => {
     config.headers.Authorization = ``;
   }
   return config;
-});
+}); 
 
 AxiosInstance.interceptors.response.use(
   (response) => {

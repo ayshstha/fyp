@@ -15,14 +15,12 @@ import Appointment from "./pages/Appointments/Appointment";
 import Blog from "./pages/Blog/Blog";
 import Adoption from "./pages/Adoption/Adoption";
 import Userprofile from "./pages/Userprofile/Userprofile";
-import ProtectedRoute from "./components/protectedRoutes";
+import ProtectedRoute from "./components/ProtectedRoutes";
 import PasswordResetRequest from "./pages/PasswordResetRequest/PasswordResetRequest";
 import PasswordReset from "./pages/PasswordReset/PasswordReset";
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("Token"));
-
-  
 
   const router = createBrowserRouter(
     createRoutesFromElements(
@@ -47,7 +45,10 @@ function App() {
             )
           }
         />
-        <Route path="/request/password_reset" element={<PasswordResetRequest />} />
+        <Route
+          path="/request/password_reset"
+          element={<PasswordResetRequest />}
+        />
         <Route path="/password-reset/:token" element={<PasswordReset />} />
 
         {/* Protected Routes (Only accessible when logged in) */}

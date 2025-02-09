@@ -26,7 +26,7 @@ body {
     justify-content: center;
     padding: 2rem;
     position: relative;
-    animation: fadeIn 1s ease-in-out;
+    animation: fadeIn 0.2s ease-in-out;
 }
 
 /* Background Blur Effect */
