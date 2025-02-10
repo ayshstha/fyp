@@ -1,35 +1,66 @@
-import React, { useState } from "react";
-import {
-  Heart,
-  PawPrint,
-  Home,
-  Shield,
-  X,
-  Camera,
-  MapPin,
-  FileText,
-  AlertCircle,
-} from "lucide-react";
-import Rescue from "../../components/Rescue/Rescue";
+import React, { useState, useEffect, useRef } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { Heart, Camera, MapPin, FileText, AlertCircle, X } from "lucide-react";
 import "./PetRescue.css";
+
+// OpenStreetMap Component for pinning the location
+const OpenStreetMapComponent = ({ onLocationSelect, initialLocation }) => {
+  const mapRef = useRef(null); // Ref to store map container
+  const markerRef = useRef(null); // Ref to store marker
+
+  useEffect(() => {
+    // Initialize map if not already initialized
+    const map = L.map(mapRef.current).setView([initialLocation.lat, initialLocation.lng], 13);
+
+    // Add OpenStreetMap tiles
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map);
+
+    // Initialize marker and attach to map
+    markerRef.current = L.marker([initialLocation.lat, initialLocation.lng]).addTo(map);
+
+    // Handle map click to update marker and location
+    map.on("click", (e) => {
+      const { lat, lng } = e.latlng;
+      markerRef.current.setLatLng([lat, lng]); // Move marker to new location
+      onLocationSelect({ lat, lng }); // Update parent component with new location
+    });
+
+    // Cleanup map when component unmounts
+    return () => {
+      map.remove();
+    };
+  }, [initialLocation, onLocationSelect]); // Only run this effect when initialLocation or onLocationSelect change
+
+  return (
+    <div id="map-container" style={{ height: "400px", width: "100%" }} ref={mapRef}></div>
+  );
+};
 
 const PetRescue = () => {
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     images: [],
-    location: "",
+    location: { lat: null, lng: null },
     description: "",
   });
   const [errors, setErrors] = useState({});
   const [previewImages, setPreviewImages] = useState([]);
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [loadingLocation, setLoadingLocation] = useState(true);
 
   const handleOpenModal = () => setShowModal(true);
-
   const handleCloseModal = () => {
     setShowModal(false);
     setErrors({});
     setPreviewImages([]);
-    setFormData({ images: [], location: "", description: "" });
+    setFormData({
+      images: [],
+      location: { lat: null, lng: null },
+      description: "",
+    });
   };
 
   const handleImageChange = (e) => {
@@ -44,8 +75,8 @@ const PetRescue = () => {
     if (formData.images.length === 0) {
       newErrors.images = "Please upload at least one image";
     }
-    if (!formData.location.trim()) {
-      newErrors.location = "Location is required";
+    if (!formData.location.lat || !formData.location.lng) {
+      newErrors.location = "Please pin a location on the map";
     }
     if (!formData.description.trim()) {
       newErrors.description = "Description is required";
@@ -62,6 +93,31 @@ const PetRescue = () => {
     }
   };
 
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setCurrentLocation({ lat: latitude, lng: longitude });
+          setFormData({
+            ...formData,
+            location: { lat: latitude, lng: longitude },
+          });
+          setLoadingLocation(false);
+        },
+        (error) => {
+          console.error("Error fetching geolocation", error);
+          setCurrentLocation({ lat: 37.7749, lng: -122.4194 }); // Fallback to San Francisco
+          setLoadingLocation(false);
+        }
+      );
+    } else {
+      console.error("Geolocation is not supported by this browser.");
+      setCurrentLocation({ lat: 37.7749, lng: -122.4194 }); // Fallback to San Francisco
+      setLoadingLocation(false);
+    }
+  }, []);
+
   return (
     <div className="rescue-container">
       {/* Intro Section */}
@@ -75,79 +131,6 @@ const PetRescue = () => {
           <button className="rescue-btn" onClick={handleOpenModal}>
             Rescue!!!
           </button>
-        </div>
-      </section>
-      <Rescue showButton={false} />
-      {/* Video Section */}
-      <section className="video-section">
-        <h2>See Our Rescue Work</h2>
-        <div className="video-container">
-          <video
-            src="/blogvid.mp4"
-            controls
-            className="local-video"
-            poster="/path/to/thumbnail.jpg"
-          ></video>
-        </div>
-      </section>
-
-      {/* Info Section */}
-      <section className="rescue-info">
-        <div className="info-grid">
-          <div className="info-card">
-            <Heart className="info-icon" />
-            <h3>Why They Need Us</h3>
-            <p>
-              Many dogs face abandonment, abuse, or injuries on the streets.
-              Without intervention, these beautiful souls have little chance of
-              survival or finding loving homes.
-            </p>
-          </div>
-          <div className="info-card">
-            <PawPrint className="info-icon" />
-            <h3>Our Rescue Process</h3>
-            <p>
-              From emergency rescue to rehabilitation, we provide comprehensive
-              care including medical treatment, behavioral training, and
-              emotional support to prepare dogs for their forever homes.
-            </p>
-          </div>
-          <div className="info-card">
-            <Home className="info-icon" />
-            <h3>Adoption Journey</h3>
-            <p>
-              We carefully match dogs with loving families, ensuring both the
-              dog and adopter are set up for a successful, lifelong bond. Each
-              adoption includes support and guidance.
-            </p>
-          </div>
-          <div className="info-card">
-            <Shield className="info-icon" />
-            <h3>Post-Adoption Care</h3>
-            <p>
-              Our commitment doesn't end with adoption. We provide ongoing
-              support, medical advice, and training resources to ensure a smooth
-              transition into their new homes.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Impact Stats Section */}
-      <section className="impact-stats">
-        <div className="stats-container">
-          <div className="stat-item">
-            <h3>500+</h3>
-            <p>Dogs Rescued</p>
-          </div>
-          <div className="stat-item">
-            <h3>350+</h3>
-            <p>Successful Adoptions</p>
-          </div>
-          <div className="stat-item">
-            <h3>24/7</h3>
-            <p>Emergency Response</p>
-          </div>
         </div>
       </section>
 
@@ -165,6 +148,7 @@ const PetRescue = () => {
             </div>
 
             <form className="rescue-form" onSubmit={handleSubmit}>
+              {/* Image Upload Section */}
               <div className="form-group">
                 <label>
                   <Camera className="form-icon" /> Upload Pictures
@@ -202,19 +186,23 @@ const PetRescue = () => {
                 )}
               </div>
 
+              {/* Location Section */}
               <div className="form-group">
                 <label>
                   <MapPin className="form-icon" /> Location
                 </label>
-                <input
-                  type="text"
-                  placeholder="Enter the location where you found the dog"
-                  value={formData.location}
-                  onChange={(e) =>
-                    setFormData({ ...formData, location: e.target.value })
-                  }
-                  className={errors.location ? "error" : ""}
-                />
+                {loadingLocation ? (
+                  <div>Loading map...</div>
+                ) : currentLocation ? (
+                  <OpenStreetMapComponent
+                    onLocationSelect={(location) =>
+                      setFormData({ ...formData, location })
+                    }
+                    initialLocation={currentLocation}
+                  />
+                ) : (
+                  <div>Error: Could not retrieve location</div>
+                )}
                 {errors.location && (
                   <span className="error-message">
                     <AlertCircle size={16} /> {errors.location}
@@ -222,6 +210,7 @@ const PetRescue = () => {
                 )}
               </div>
 
+              {/* Description Section */}
               <div className="form-group">
                 <label>
                   <FileText className="form-icon" /> Description
@@ -243,7 +232,7 @@ const PetRescue = () => {
               </div>
 
               <button type="submit" className="submit-btn">
-                <Heart className="btn-icon" /> Submit Report
+                Submit
               </button>
             </form>
           </div>
