@@ -2,12 +2,14 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import RegisterViewset, LoginViewset, csrf_token, UserProfileView, ChangePasswordView, EditProfileView
+from .views import RegisterViewset, LoginViewset, csrf_token, UserProfileView, ChangePasswordView, EditProfileView, \
+    UserViewset
 
 # Define the router and register the viewsets
 router = DefaultRouter()
 router.register('register', RegisterViewset, basename='register')
 router.register('login', LoginViewset, basename='login')  # ✅ Now LoginViewset is imported
+router.register('users', UserViewset, basename="user")
 
 # Define URL patterns
 urlpatterns = [

@@ -12,21 +12,24 @@ const Login = () => {
   const [showMessage, setShowMessage] = useState(false);
 
   const submission = (data) => {
-    AxiosInstance.post("login/", {
-      email: data.email,
-      password: data.password,
+  AxiosInstance.post("login/", {
+    email: data.email,
+    password: data.password,
+  })
+    .then((response) => {
+      console.log(response);
+      localStorage.setItem("Token", response.data.token);
+      localStorage.setItem("UserRole", response.data.user.role); // Save user role
+      window.dispatchEvent(new Event("storage"));
+
+      navigate("/home"); // Normal users go to home
+
     })
-      .then((response) => {
-        console.log(response);
-        localStorage.setItem("Token", response.data.token);
-        window.dispatchEvent(new Event("storage")); // Notify token update
-        navigate("/home");
-      })
-      .catch((error) => {
-        setShowMessage(true);
-        console.error("Error during login", error);
-      });
-  };
+    .catch((error) => {
+      setShowMessage(true);
+      console.error("Error during login", error);
+    });
+};
 
   return (
     <div className="login-container">

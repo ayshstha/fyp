@@ -31,18 +31,30 @@ class LoginViewset(viewsets.ViewSet):
             email = serializer.validated_data['email']
             password = serializer.validated_data['password']
             user = authenticate(request, email=email, password=password)
+
             if user:
                 _, token = AuthToken.objects.create(user)
-                return Response(
-                    {
-                        "user": self.serializer_class(user).data,
-                        "token": token
-                    }
-                )
-            else:
-                return Response({"error": "Invalid credentials"}, status=401)
-        else:
-            return Response(serializer.errors, status=400)
+
+                user_data = {
+                    "id": user.id,
+                    "email": user.email,
+                    "full_name": user.full_name,
+                    "phone_number": user.phone_number,
+                    "is_superuser": user.is_superuser,  # Check if user is a superuser
+                }
+
+                if user.is_superuser:
+                    user_data["role"] = "Admin"
+                    user_data["message"] = "Welcome, Admin!"
+                else:
+                    user_data["role"] = "User"
+                    user_data["message"] = "Welcome, User!"
+
+                return Response({"user": user_data, "token": token})
+
+            return Response({"error": "Invalid credentials"}, status=401)
+        return Response(serializer.errors, status=400)
+
 
 
 def csrf_token(request):
@@ -65,37 +77,51 @@ class RegisterViewset(viewsets.ModelViewSet):
             return Response(serializer.errors, status=400)
 
 
-class UserViewset(viewsets.ViewSet):
+class UserViewset(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
-    queryset = User.objects.all()
     serializer_class = RegisterSerializer
 
-    def list(self, request):
-        queryset = User.objects.all()
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_superuser:
+            return CustomUser.objects.all()  # Admins see all users
+        return CustomUser.objects.filter(id=user.id)  # Normal users see only themselves
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
         serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data)
+
 
 
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
 
     def get(self, request):
-        # Access the currently authenticated user
         user = request.user
 
-        # Optionally, if you have a related profile model, you can include that data as well
-        # Assuming you have a `Profile` model related to the User model with additional fields like phone
-        try:
-            profile_picture_url = request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None
+        profile_picture_url = (
+            request.build_absolute_uri(user.profile_picture.url)
+            if user.profile_picture else None
+        )
 
-            return Response({
-                "name": user.full_name,  # Full name from the user
-                "email": user.email,  # Email from the user
-                "phone": user.phone_number if user.phone_number else None,  # Example of using profile fields
-                "profile_picture": profile_picture_url,
-            })
-        except Exception as e:
-            return Response({"error": "User profile not found."}, status=404)
+        # Response for Normal Users
+        user_data = {
+            "id": user.id,
+            "name": user.full_name,
+            "email": user.email,
+            "phone": user.phone_number,
+            "profile_picture": profile_picture_url,
+            "role": "Admin" if user.is_superuser else "User",
+        }
+
+        # If the user is a superuser, return extra details
+        if user.is_superuser:
+            all_users = CustomUser.objects.all().values("id", "full_name", "email")
+            user_data["managed_users"] = list(all_users)  # Show all users under admin
+
+        return Response(user_data)
 
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
