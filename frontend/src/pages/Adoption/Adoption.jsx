@@ -8,10 +8,10 @@ const TermsAndConditions = ({ dog, onClose, onSubmit }) => {
   const [agreed, setAgreed] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
 
+  // In TermsAndConditions component
   const handleSubmit = () => {
-    if (agreed && selectedDate) {
-      onSubmit({ agreed, selectedDate });
-    }
+    const isoDate = new Date(selectedDate).toISOString();
+    onSubmit({ agreed, selectedDate: isoDate });
   };
 
   return (
@@ -126,18 +126,26 @@ const TermsAndConditions = ({ dog, onClose, onSubmit }) => {
 const DogProfile = ({ dog, onClose }) => {
   const [showTerms, setShowTerms] = useState(false);
 
+  // In DogProfile component
   const handleAdoptSubmit = async (data) => {
     try {
-      await AxiosInstance.post("/adoption-requests/", {
+      const response = await AxiosInstance.post("/adoption-requests/", {
         dog: dog.id,
         pickup_date: data.selectedDate,
       });
-      alert("Adoption request submitted!");
-      setShowTerms(false);
-      onClose();
-      window.location.reload(); // Refresh the page to update the dog's status
+
+      if (response.status === 201) {
+        alert("Adoption request submitted successfully!");
+        setShowTerms(false);
+        onClose();
+        // Refresh dog list
+        const updatedDogs = await AxiosInstance.get("/Adoption/");
+        setAvailableDogs(updatedDogs.data);
+      }
     } catch (error) {
-      alert(error.response?.data?.detail || "Submission failed");
+      const errorMessage =
+        error.response?.data?.detail || "Submission failed. Please try again.";
+      alert(errorMessage);
     }
   };
 
@@ -161,24 +169,24 @@ const DogProfile = ({ dog, onClose }) => {
 
           <div className="profile-details">
             <h2>{dog.name}</h2>
-
             <section>
               <h3>Rescue Story</h3>
               <p>{dog.rescue_story || "No rescue story available"}</p>
             </section>
-
             <section>
               <h3>Behavior & Personality</h3>
               <p>{dog.behavior || "No behavior information available"}</p>
             </section>
-
+            // In DogProfile component
             <button
               className="adopt-button"
               onClick={() => setShowTerms(true)}
-              disabled={dog.is_booked}
+              disabled={dog.has_pending_request}
             >
               <Heart className="heart-icon" />
-              {dog.is_booked ? "Booked" : `Request to Adopt ${dog.name}`}
+              {dog.has_pending_request
+                ? "Booked"
+                : `Request to Adopt ${dog.name}`}
             </button>
           </div>
         </div>
@@ -200,18 +208,18 @@ const Adoption = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchDogs = async () => {
-    try {
-      const response = await AxiosInstance.get("/Adoption/");
-      setAvailableDogs(response.data);
-      setError(null);
-    } catch (err) {
-      setError("Failed to load dogs. Please try again later.");
-      console.error("Error fetching dogs:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchDogs = async () => {
+  try {
+    const response = await AxiosInstance.get("/Adoption/");
+    setAvailableDogs(response.data);
+    setError(null);
+  } catch (err) {
+    setError("Failed to load dogs. Please try again later.");
+    console.error("Error fetching dogs:", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchDogs();
@@ -265,9 +273,9 @@ const Adoption = () => {
                 <button
                   onClick={() => setSelectedDog(dog)}
                   className="meet-btn"
-                  disabled={dog.is_booked}
+                  disabled={dog.has_pending_request}
                 >
-                  {dog.is_booked ? "Booked" : "Meet"}
+                  {dog.has_pending_request ? "Booked" : "Meet"}
                 </button>
               </div>
             ))}

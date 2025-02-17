@@ -186,22 +186,10 @@ class AdminManagementView(APIView):
 
 from django.db.models import Exists, OuterRef
 
+# views.py
 class AdoptionViewSet(viewsets.ModelViewSet):
-    queryset = Adoption.objects.all()
+    queryset = Adoption.objects.filter(is_booked=False)  # Only show unbooked dogs
     serializer_class = AdoptionSerializer
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        queryset = queryset.annotate(
-            is_booked=Exists(
-                AdoptionRequest.objects.filter(
-                    dog=OuterRef('pk'),
-                    status__in=['pending', 'accepted']
-                )
-            )
-        )
-        return queryset
-    
 
 from .models import Feedback
 from .serializers import FeedbackSerializer
@@ -242,40 +230,61 @@ class ToggleFeaturedFeedback(APIView):
 
         return Response({"message": "Feedback featured status toggled successfully", "featured": feedback.featured})
 
+    
+#
 class AdoptionRequestViewSet(viewsets.ModelViewSet):
     queryset = AdoptionRequest.objects.all()
     serializer_class = AdoptionRequestSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        if self.request.user.is_superuser:
-            return queryset.order_by('-created_at')
-        return queryset.filter(user=self.request.user).order_by('-created_at')
-
     def perform_create(self, serializer):
         dog = serializer.validated_data['dog']
-        if AdoptionRequest.objects.filter(dog=dog, status__in=['pending', 'accepted']).exists():
-            raise serializers.ValidationError("This dog is already booked.")
+        
+        # Check for existing pending/approved requests
+        if AdoptionRequest.objects.filter(dog=dog, status__in=['pending', 'approved']).exists():
+            raise serializers.ValidationError("This dog already has an active request")
+        
         serializer.save(user=self.request.user)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         new_status = request.data.get('status')
-
-        if new_status == 'accepted':
-            instance.dog.is_available = False
+        
+        if new_status not in ['approved', 'rejected']:
+            return Response(
+                {"error": "Invalid status. Use 'approved' or 'rejected'."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Handle approval
+        if new_status == 'approved':
+            # Mark dog as booked and reject others
+            instance.dog.is_booked = True
             instance.dog.save()
-            # Decline all other requests for this dog
-            AdoptionRequest.objects.filter(dog=instance.dog, status='pending') \
-                .exclude(id=instance.id).update(status='declined')
-        elif new_status == 'declined':
-            if instance.status == 'accepted':
-                instance.dog.is_available = True
+            AdoptionRequest.objects.filter(
+                dog=instance.dog,
+                status='pending'
+            ).exclude(id=instance.id).update(status='rejected')
+        
+        # Handle rejection
+        elif new_status == 'rejected':
+            # Only unbook if no other approved requests exist
+            if not AdoptionRequest.objects.filter(
+                dog=instance.dog,
+                status='approved'
+            ).exists():
+                instance.dog.is_booked = False
                 instance.dog.save()
-            # Check if any remaining pending requests
-            if not AdoptionRequest.objects.filter(dog=instance.dog, status='pending').exists():
-                instance.dog.is_available = True
-                instance.dog.save()
+        
+        instance.status = new_status
+        instance.save()
+        
+        return Response(self.get_serializer(instance).data)
 
-        return super().update(request, *args, **kwargs)
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return AdoptionRequest.objects.filter(status='pending')
+        return AdoptionRequest.objects.filter(
+            user=self.request.user,
+            status__in=['pending', 'approved']
+        )

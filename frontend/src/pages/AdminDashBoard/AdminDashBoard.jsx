@@ -428,21 +428,45 @@ const AdoptionRequests = () => {
         console.error("Error fetching adoption requests:", error);
       }
     };
-
     fetchRequests();
   }, []);
 
-  const handleStatusChange = async (requestId, status) => {
-    try {
-      await AxiosInstance.patch(`/adoption-requests/${requestId}/`, { status });
-      setRequests((prevRequests) =>
-        prevRequests.map((req) =>
-          req.id === requestId ? { ...req, status } : req
-        )
-      );
-    } catch (error) {
-      console.error("Error updating request status:", error);
+  // In AdoptionRequests component
+const handleStatusChange = async (requestId, newStatus) => {
+  try {
+    const originalRequests = [...requests];
+
+    // Optimistic update
+    setRequests((prev) => prev.filter((request) => request.id !== requestId));
+
+    await AxiosInstance.patch(`/adoption-requests/${requestId}/`, {
+      status: newStatus,
+    });
+
+    // Refresh dog list after rejection
+    if (newStatus === "rejected") {
+      const dogResponse = await AxiosInstance.get("/Adoption/");
+      setAvailableDogs(dogResponse.data);
     }
+  } catch (error) {
+    console.error("Error:", error.response?.data);
+    setRequests(originalRequests);
+
+    const errorMessage =
+      error.response?.data?.detail ||
+      error.response?.data?.status?.[0] ||
+      `Failed to ${newStatus} request. Please try again.`;
+
+    alert(errorMessage);
+  }
+};
+  // Safe data access with fallbacks
+  const getDogImage = (request) => {
+    return request.dog_details?.image || "/placeholder-dog.jpg";
+  };
+
+  const getUserAvatar = (request) => {
+    return request.user_details?.profile_picture || "/default-avatar.png";
   };
 
   return (
@@ -465,10 +489,8 @@ const AdoptionRequests = () => {
                 <td>
                   <div className="user-info">
                     <img
-                      src={
-                        request.user.profile_picture || "/default-avatar.png"
-                      }
-                      alt={request.user.full_name}
+                      src={getUserAvatar(request)}
+                      alt={request.user_details?.full_name || "User"}
                       width="50"
                       height="50"
                       style={{ borderRadius: "50%", objectFit: "cover" }}
@@ -477,37 +499,43 @@ const AdoptionRequests = () => {
                       }}
                     />
                     <div>
-                      <p>{request.user.full_name}</p>
-                      <p>{request.user.phone_number}</p>
+                      <p>{request.user_details?.full_name || "Unknown User"}</p>
                     </div>
                   </div>
                 </td>
                 <td>
                   <div className="dog-info">
                     <img
-                      src={request.dog.image}
-                      alt={request.dog.name}
+                      src={getDogImage(request)}
+                      alt={request.dog_details?.name || "Dog"}
                       width="50"
                       height="50"
+                      onError={(e) => {
+                        e.target.src = "/placeholder-dog.jpg";
+                      }}
                     />
-                    <p>{request.dog.name}</p>
+                    <p>{request.dog_details?.name || "Unknown Dog"}</p>
                   </div>
                 </td>
-                <td>{new Date(request.pickup_date).toLocaleString()}</td>
-                <td>{request.status}</td>
+                <td>
+                  {request.pickup_date
+                    ? new Date(request.pickup_date).toLocaleString()
+                    : "N/A"}
+                </td>
+                <td>{request.status || "Unknown"}</td>
                 <td>
                   {request.status === "pending" && (
                     <>
                       <button
                         onClick={() =>
-                          handleStatusChange(request.id, "accepted")
+                          handleStatusChange(request.id, "approved")
                         }
                       >
-                        Accept
+                        Approve
                       </button>
                       <button
                         onClick={() =>
-                          handleStatusChange(request.id, "declined")
+                          handleStatusChange(request.id, "rejected")
                         }
                       >
                         Decline

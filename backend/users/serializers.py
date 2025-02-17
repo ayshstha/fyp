@@ -14,7 +14,6 @@ class LoginSerializer(serializers.Serializer):
         return ret
 
 
-from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
 from .models import CustomUser  # Import your CustomUser model
 
@@ -42,11 +41,18 @@ from .models import Adoption
 
 class AdoptionSerializer(serializers.ModelSerializer):
     is_booked = serializers.BooleanField(read_only=True)
+    has_pending_request = serializers.SerializerMethodField()
     
     class Meta:
         model = Adoption
         fields = '__all__'
-
+        
+    def get_has_pending_request(self, obj):
+        # Check if any pending requests exist for this dog
+        return AdoptionRequest.objects.filter(
+            dog=obj, 
+            status__in=['pending', 'approved']
+        ).exists()
 
 from .models import Feedback
 class FeedbackSerializer(serializers.ModelSerializer):
@@ -67,25 +73,40 @@ class FeedbackSerializer(serializers.ModelSerializer):
             'full_name': obj.user.full_name,
             'profile_picture': profile_picture_url  # Full URL
         }
+class UserSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.SerializerMethodField()
 
-from .models import AdoptionRequest
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'full_name', 'profile_picture']
+
+    def get_profile_picture(self, obj):
+        if obj.profile_picture:
+            return self.context['request'].build_absolute_uri(obj.profile_picture.url)
+        return None
+
+class DogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Adoption
+        fields = ['id', 'name', 'image']
+
+from. models import AdoptionRequest
+# serializers.py
+# serializers.py
 class AdoptionRequestSerializer(serializers.ModelSerializer):
-    user = serializers.SerializerMethodField()
-    dog = AdoptionSerializer(read_only=True)
-    
+    status = serializers.ChoiceField(
+        choices=['pending', 'approved', 'rejected'], 
+        required=False
+    )
+    dog = serializers.PrimaryKeyRelatedField(queryset=Adoption.objects.all(), write_only=True)
+    dog_details = DogSerializer(source='dog', read_only=True)
+    user_details = UserSerializer(source='user', read_only=True)
+
     class Meta:
         model = AdoptionRequest
-        fields = ('id', 'user', 'dog', 'pickup_date', 'status', 'created_at')
-    
-    def get_user(self, obj):
-        user = obj.user
-        profile_picture_url = (
-            self.context['request'].build_absolute_uri(user.profile_picture.url)
-            if user.profile_picture else None
-        )
-        return {
-            'id': user.id,
-            'full_name': user.full_name,
-            'profile_picture': profile_picture_url,
-            'phone_number': user.phone_number,
-        }
+        fields = [
+            'id', 'user', 'user_details', 
+            'dog', 'dog_details', 'pickup_date', 
+            'status', 'created_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'user']  # Removed 'status' from here

@@ -63,8 +63,8 @@ class Adoption(models.Model):
     behavior = models.TextField(blank=True, null=True)
     rescue_story = models.TextField(blank=True, null=True)
     image = models.ImageField(upload_to='dogs/', blank=True, null=True)
-    is_available = models.BooleanField(default=True)  # <-- Add this line
-
+    is_booked = models.BooleanField(default=False)  # Add this field
+    
     def __str__(self):
         return self.name
 
@@ -77,21 +77,23 @@ class Feedback(models.Model):
     def __str__(self):
         return f"Feedback from {self.user.email}"
 
-
+# models.py
+# models.py
 class AdoptionRequest(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('accepted', 'Accepted'),
-        ('declined', 'Declined'),
-    ]
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     dog = models.ForeignKey(Adoption, on_delete=models.CASCADE)
     pickup_date = models.DateTimeField()
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[('pending', 'Pending'), ('approved', 'Approved'), ('rejected', 'Rejected')],
+        default='pending'
+    )
 
     def __str__(self):
         return f"{self.user.email} - {self.dog.name} ({self.status})"
+
+    # Remove the Meta class with unique_together
 
 @receiver(reset_password_token_created)
 def password_reset_token_created(reset_password_token, *args, **kwargs):
@@ -121,4 +123,4 @@ def password_reset_token_created(reset_password_token, *args, **kwargs):
 
     msg.attach_alternative(html_message, "text/html")
     msg.send()
- 
+

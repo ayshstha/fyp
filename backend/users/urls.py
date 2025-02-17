@@ -23,8 +23,8 @@ router.register('login', LoginViewset, basename='login')
 router.register('users', UserViewset, basename="user")
 router.register('Adoption', AdoptionViewSet, basename='Adoption')
 router.register('feedback', FeedbackViewSet, basename='feedback')
+# urls.py
 router.register('adoption-requests', AdoptionRequestViewSet, basename='adoption-requests')
-
 
 # Define URL patterns
 urlpatterns = [
@@ -34,6 +34,7 @@ urlpatterns = [
     path('user/edit-profile/', EditProfileView.as_view(), name='edit-profile'),  
     path('', include(router.urls)),  # Include router URLs (feedback is here)
     path('feedback/toggle-featured/<int:feedback_id>/', ToggleFeaturedFeedback.as_view(), name='toggle-featured-feedback'),
+    
 ]
 
 if settings.DEBUG:  # Only in development mode
