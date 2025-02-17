@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   RouterProvider,
   createBrowserRouter,
@@ -18,6 +18,7 @@ import Userprofile from "./pages/Userprofile/Userprofile";
 import ProtectedRoute from "./components/ProtectedRoutes";
 import PasswordResetRequest from "./pages/PasswordResetRequest/PasswordResetRequest";
 import PasswordReset from "./pages/PasswordReset/PasswordReset";
+import AdminDashboard from "./pages/AdminDashBoard/AdminDashBoard"; // Import AdminDashboard
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("Token"));
@@ -61,6 +62,11 @@ function App() {
             <Route path="/adoption" element={<Adoption />} />
             <Route path="/userprofile" element={<Userprofile />} />
           </Route>
+        </Route>
+
+        {/* Admin Protected Route */}
+        <Route element={<ProtectedRoute adminOnly={true} />}>
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
         </Route>
       </>
     )

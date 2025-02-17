@@ -14,10 +14,6 @@ from django.core.files.storage import default_storage
 from knox.models import AuthToken
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
@@ -56,7 +52,6 @@ class LoginViewset(viewsets.ViewSet):
         return Response(serializer.errors, status=400)
 
 
-
 def csrf_token(request):
     # This view will return the CSRF token
     csrf_token = get_token(request)
@@ -77,26 +72,21 @@ class RegisterViewset(viewsets.ModelViewSet):
             return Response(serializer.errors, status=400)
 
 
+# In views.py
 class UserViewset(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = RegisterSerializer
 
     def get_queryset(self):
         user = self.request.user
-
         if user.is_superuser:
-            return CustomUser.objects.all()  # Admins see all users
-        return CustomUser.objects.filter(id=user.id)  # Normal users see only themselves
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.serializer_class(queryset, many=True)
-        return Response(serializer.data)
-
+            # Return all users except superusers
+            return CustomUser.objects.filter(is_superuser=False)
+        return CustomUser.objects.filter(id=user.id)
 
 
 class UserProfileView(APIView):
-    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         user = request.user
@@ -106,22 +96,21 @@ class UserProfileView(APIView):
             if user.profile_picture else None
         )
 
-        # Response for Normal Users
         user_data = {
             "id": user.id,
             "name": user.full_name,
             "email": user.email,
             "phone": user.phone_number,
-            "profile_picture": profile_picture_url,
+            "profile_picture": profile_picture_url,  # Full URL
             "role": "Admin" if user.is_superuser else "User",
         }
 
-        # If the user is a superuser, return extra details
         if user.is_superuser:
             all_users = CustomUser.objects.all().values("id", "full_name", "email")
-            user_data["managed_users"] = list(all_users)  # Show all users under admin
+            user_data["managed_users"] = list(all_users)
 
         return Response(user_data)
+
 
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
@@ -151,8 +140,8 @@ class ChangePasswordView(APIView):
             {"message": "Password changed successfully."},
             status=status.HTTP_200_OK,
         )
-        
-        
+
+
 class EditProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -167,7 +156,7 @@ class EditProfileView(APIView):
             user.email = data["email"]
         if "phone_number" in data:
             user.phone_number = data["phone_number"]
-
+ 
         # Handle profile picture upload
         if "profile_picture" in request.FILES:
             # Delete old profile picture if it exists
@@ -180,3 +169,113 @@ class EditProfileView(APIView):
             {"message": "Profile updated successfully."},
             status=status.HTTP_200_OK,
         )
+
+
+class AdminManagementView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.is_superuser:
+            return Response({"error": "Unauthorized"}, status=403)
+        
+        # Admin-only logic here
+        users = CustomUser.objects.all()
+        serializer = RegisterSerializer(users, many=True)
+        return Response(serializer.data)
+    
+
+from django.db.models import Exists, OuterRef
+
+class AdoptionViewSet(viewsets.ModelViewSet):
+    queryset = Adoption.objects.all()
+    serializer_class = AdoptionSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.annotate(
+            is_booked=Exists(
+                AdoptionRequest.objects.filter(
+                    dog=OuterRef('pk'),
+                    status__in=['pending', 'accepted']
+                )
+            )
+        )
+        return queryset
+    
+
+from .models import Feedback
+from .serializers import FeedbackSerializer
+
+class FeedbackViewSet(viewsets.ModelViewSet):
+    queryset = Feedback.objects.all()
+    serializer_class = FeedbackSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        featured = self.request.query_params.get('featured', None)
+        if featured is not None:
+            queryset = queryset.filter(featured=featured.lower() == 'true')
+        return queryset
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+    
+
+class ToggleFeaturedFeedback(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, feedback_id):
+        try:
+            feedback = Feedback.objects.get(id=feedback_id)
+        except Feedback.DoesNotExist:
+            return Response({"error": "Feedback not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Toggle the featured status without any limit
+        feedback.featured = not feedback.featured
+        feedback.save()
+
+        return Response({"message": "Feedback featured status toggled successfully", "featured": feedback.featured})
+
+class AdoptionRequestViewSet(viewsets.ModelViewSet):
+    queryset = AdoptionRequest.objects.all()
+    serializer_class = AdoptionRequestSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.request.user.is_superuser:
+            return queryset.order_by('-created_at')
+        return queryset.filter(user=self.request.user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        dog = serializer.validated_data['dog']
+        if AdoptionRequest.objects.filter(dog=dog, status__in=['pending', 'accepted']).exists():
+            raise serializers.ValidationError("This dog is already booked.")
+        serializer.save(user=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        new_status = request.data.get('status')
+
+        if new_status == 'accepted':
+            instance.dog.is_available = False
+            instance.dog.save()
+            # Decline all other requests for this dog
+            AdoptionRequest.objects.filter(dog=instance.dog, status='pending') \
+                .exclude(id=instance.id).update(status='declined')
+        elif new_status == 'declined':
+            if instance.status == 'accepted':
+                instance.dog.is_available = True
+                instance.dog.save()
+            # Check if any remaining pending requests
+            if not AdoptionRequest.objects.filter(dog=instance.dog, status='pending').exists():
+                instance.dog.is_available = True
+                instance.dog.save()
+
+        return super().update(request, *args, **kwargs)

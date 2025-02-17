@@ -38,3 +38,54 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         return user
 
+from .models import Adoption
+
+class AdoptionSerializer(serializers.ModelSerializer):
+    is_booked = serializers.BooleanField(read_only=True)
+    
+    class Meta:
+        model = Adoption
+        fields = '__all__'
+
+
+from .models import Feedback
+class FeedbackSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Feedback
+        fields = ('id', 'message', 'created_at', 'user', 'featured')
+
+    def get_user(self, obj):
+        profile_picture_url = (
+            self.context['request'].build_absolute_uri(obj.user.profile_picture.url)
+            if obj.user.profile_picture else None
+        )
+
+        return {
+            'id': obj.user.id,
+            'full_name': obj.user.full_name,
+            'profile_picture': profile_picture_url  # Full URL
+        }
+
+from .models import AdoptionRequest
+class AdoptionRequestSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+    dog = AdoptionSerializer(read_only=True)
+    
+    class Meta:
+        model = AdoptionRequest
+        fields = ('id', 'user', 'dog', 'pickup_date', 'status', 'created_at')
+    
+    def get_user(self, obj):
+        user = obj.user
+        profile_picture_url = (
+            self.context['request'].build_absolute_uri(user.profile_picture.url)
+            if user.profile_picture else None
+        )
+        return {
+            'id': user.id,
+            'full_name': user.full_name,
+            'profile_picture': profile_picture_url,
+            'phone_number': user.phone_number,
+        }

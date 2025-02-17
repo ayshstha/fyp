@@ -1,6 +1,27 @@
-import './Testimonial.css';
+import { useState, useEffect } from "react";
+import AxiosInstance from "../AxiosInstance";
+import "./Testimonial.css";
 
 export default function Testimonial() {
+  const [testimonials, setTestimonials] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        const response = await AxiosInstance.get("/feedback/?featured=true");
+        setTestimonials(response.data);
+      } catch (error) {
+        console.error("Error fetching testimonials:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTestimonials();
+  }, []);
+
+  if (loading) return <div className="loading">Loading testimonials...</div>;
+
   return (
     <section className="testimonial">
       <div className="testimonial-title">
@@ -9,41 +30,26 @@ export default function Testimonial() {
       </div>
 
       <div className="testimonial-grid">
-        <div className="testimonial-card">
-          <div className="testimonial-image">
-            <img src="/testimonial.png" alt="Sarah Johnson" />
+        {testimonials.map((testimonial) => (
+          <div className="testimonial-card" key={testimonial.id}>
+            <div className="testimonial-image">
+              <img
+                src={testimonial.user.profile_picture || "/default-avatar.png"}
+                alt={testimonial.user.full_name}
+                onError={(e) => {
+                  e.target.src = "/default-avatar.png";
+                }}
+              />
+            </div>
+            <div className="testimonial-content">
+              <h3>{testimonial.user.full_name || "Anonymous User"}</h3>
+              <p className="testimonial-text">{testimonial.message}</p>
+              <p className="testimonial-date">
+                {new Date(testimonial.created_at).toLocaleDateString()}
+              </p>
+            </div>
           </div>
-          <div className="testimonial-content">
-            <h3>Sarah Johnson</h3>
-            <p className="testimonial-text">
-              Our experience with the vet services was exceptional. Professional, caring, and thorough care for our rescue pup.
-            </p>
-          </div>
-        </div>
-
-        <div className="testimonial-card">
-          <div className="testimonial-image">
-            <img src="/testimonial.png" alt="Michael Chen" />
-          </div>
-          <div className="testimonial-content">
-            <h3>Michael Chen</h3>
-            <p className="testimonial-text">
-              The staff here truly understands pets and their needs. They made our visit comfortable and stress-free.
-            </p>
-          </div>
-        </div>
-
-        <div className="testimonial-card">
-          <div className="testimonial-image">
-            <img src="/testimonial.png" alt="Emily Rodriguez" />
-          </div>
-          <div className="testimonial-content">
-            <h3>Emily Rodriguez</h3>
-            <p className="testimonial-text">
-              Amazing service! They went above and beyond to help our elderly dog. Highly recommended!
-            </p>
-          </div>
-        </div>
+        ))}
       </div>
     </section>
   );

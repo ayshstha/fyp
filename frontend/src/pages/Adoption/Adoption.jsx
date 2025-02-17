@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Heart, Calendar } from "lucide-react";
+import AxiosInstance from "../../components/AxiosInstance";
 import "./Adoption.css";
 import AdoptionComponent from "../../components/Adoption/Adoption";
 
@@ -125,10 +126,19 @@ const TermsAndConditions = ({ dog, onClose, onSubmit }) => {
 const DogProfile = ({ dog, onClose }) => {
   const [showTerms, setShowTerms] = useState(false);
 
-  const handleAdoptSubmit = (data) => {
-    console.log("Adoption request submitted:", { dog, ...data });
-    setShowTerms(false);
-    onClose();
+  const handleAdoptSubmit = async (data) => {
+    try {
+      await AxiosInstance.post("/adoption-requests/", {
+        dog: dog.id,
+        pickup_date: data.selectedDate,
+      });
+      alert("Adoption request submitted!");
+      setShowTerms(false);
+      onClose();
+      window.location.reload(); // Refresh the page to update the dog's status
+    } catch (error) {
+      alert(error.response?.data?.detail || "Submission failed");
+    }
   };
 
   return (
@@ -140,7 +150,13 @@ const DogProfile = ({ dog, onClose }) => {
 
         <div className="profile-content">
           <div className="profile-image">
-            <img src={dog.image} alt={dog.name} />
+            <img
+              src={dog.image}
+              alt={dog.name}
+              onError={(e) => {
+                e.target.src = "/placeholder-dog.jpg";
+              }}
+            />
           </div>
 
           <div className="profile-details">
@@ -148,28 +164,21 @@ const DogProfile = ({ dog, onClose }) => {
 
             <section>
               <h3>Rescue Story</h3>
-              <p>
-                {dog.rescueStory ||
-                  `${dog.name} was rescued from the streets and has been 
-                receiving care and love at our shelter. Through dedication and patience, 
-                ${dog.name} has transformed into a loving companion ready for a forever home.`}
-              </p>
+              <p>{dog.rescue_story || "No rescue story available"}</p>
             </section>
 
             <section>
               <h3>Behavior & Personality</h3>
-              <p>
-                {dog.behavior ||
-                  `${dog.name} is great with children and other dogs. 
-                They're house-trained, know basic commands, and love to play. 
-                ${dog.name} has a friendly and energetic personality and would do 
-                best in a home with a yard.`}
-              </p>
+              <p>{dog.behavior || "No behavior information available"}</p>
             </section>
 
-            <button className="adopt-button" onClick={() => setShowTerms(true)}>
+            <button
+              className="adopt-button"
+              onClick={() => setShowTerms(true)}
+              disabled={dog.is_booked}
+            >
               <Heart className="heart-icon" />
-              Request to Adopt {dog.name}
+              {dog.is_booked ? "Booked" : `Request to Adopt ${dog.name}`}
             </button>
           </div>
         </div>
@@ -185,52 +194,85 @@ const DogProfile = ({ dog, onClose }) => {
     </div>
   );
 };
-
 const Adoption = () => {
-  const availableDogs = [
-    {
-      name: "Bruno",
-      image: "/dogavailable1.jpeg",
-      rescueStory:
-        "Bruno was found wandering the streets, hungry and scared. After weeks of rehabilitation, he's now a happy and playful companion looking for his forever family.",
-      behavior:
-        "Bruno is a gentle giant who loves cuddles and playing fetch. He's great with kids and other pets, making him perfect for any loving family.",
-    },
-    {
-      name: "Khaire",
-      image: "/dogavailable2.jpeg",
-      rescueStory:
-        "Khaire was rescued from an abandoned building. Despite his rough start, he's grown into a loving and loyal friend.",
-      behavior:
-        "Khaire is an intelligent and active dog who excels at training. He loves outdoor activities and would thrive in an active household.",
-    },
-    { name: "Tiger", image: "/dogavailable3.jpeg" },
-    { name: "Golveda", image: "/dogavailable4.jpeg" },
-    { name: "Sheru", image: "/dogavailable5.jpeg" },
-    { name: "Prabesh", image: "/dogavailable6.jpeg" },
-    { name: "Prabesh", image: "/ai.HEIC" },
-  ];
-
+  const [availableDogs, setAvailableDogs] = useState([]);
   const [selectedDog, setSelectedDog] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchDogs = async () => {
+    try {
+      const response = await AxiosInstance.get("/Adoption/");
+      setAvailableDogs(response.data);
+      setError(null);
+    } catch (err) {
+      setError("Failed to load dogs. Please try again later.");
+      console.error("Error fetching dogs:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDogs();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-dogs">Loading available dogs...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="error-container">
+        <div className="error-message">{error}</div>
+        <button
+          className="retry-button"
+          onClick={() => window.location.reload()}
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={{ textAlign: "center" }}>
       <AdoptionComponent showButton={false} />
       <section className="available-dogs">
         <h2>Dogs Available for Adoption</h2>
-        <div className="dogs-grid">
-          {availableDogs.map((dog, index) => (
-            <div key={index} className="dog-card">
-              <div className="dog-image">
-                <img src={dog.image} alt={dog.name} />
+        {availableDogs.length === 0 ? (
+          <div className="no-dogs">
+            No dogs currently available for adoption
+          </div>
+        ) : (
+          <div className="dogs-grid">
+            {availableDogs.map((dog) => (
+              <div key={dog.id} className="dog-card">
+                <div className="dog-image">
+                  <img
+                    src={dog.image}
+                    alt={dog.name}
+                    onError={(e) => {
+                      e.target.src = "/placeholder-dog.jpg";
+                    }}
+                  />
+                </div>
+                <h3>{dog.name}</h3>
+                <button
+                  onClick={() => setSelectedDog(dog)}
+                  className="meet-btn"
+                  disabled={dog.is_booked}
+                >
+                  {dog.is_booked ? "Booked" : "Meet"}
+                </button>
               </div>
-              <h3>{dog.name}</h3>
-              <button onClick={() => setSelectedDog(dog)} className="meet-btn">
-                Meet
-              </button>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {selectedDog && (
@@ -252,5 +294,4 @@ const Adoption = () => {
     </div>
   );
 };
-
 export default Adoption;

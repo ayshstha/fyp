@@ -11,25 +11,28 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
 
+  // Modify the submission function in Login.jsx
   const submission = (data) => {
-  AxiosInstance.post("login/", {
-    email: data.email,
-    password: data.password,
-  })
-    .then((response) => {
-      console.log(response);
-      localStorage.setItem("Token", response.data.token);
-      localStorage.setItem("UserRole", response.data.user.role); // Save user role
-      window.dispatchEvent(new Event("storage"));
-
-      navigate("/home"); // Normal users go to home
-
+    AxiosInstance.post("login/", {
+      email: data.email,
+      password: data.password,
     })
-    .catch((error) => {
-      setShowMessage(true);
-      console.error("Error during login", error);
-    });
-};
+      .then((response) => {
+        localStorage.setItem("Token", response.data.token);
+        localStorage.setItem("UserRole", response.data.user.role);
+
+        // Redirect based on role
+        if (response.data.user.role === "Admin") {
+          navigate("/admin-dashboard");
+        } else {
+          navigate("/home");
+        }
+      })
+      .catch((error) => {
+        setShowMessage(true);
+        console.error("Error during login", error);
+      });
+  };
 
   return (
     <div className="login-container">

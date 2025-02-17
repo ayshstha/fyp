@@ -17,7 +17,57 @@
     margin-bottom: 1.5rem;
     font-size: 1.2rem;
   }
+    /* Loading Spinner */
+    .spinner {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+    }
   
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  
+    /* Character Count */
+    .character-count {
+      display: block;
+      text-align: right;
+      color: #666;
+      margin-top: 0.25rem;
+    }
+  
+    /* Alerts */
+    .alert {
+      padding: 0.75rem;
+      border-radius: 4px;
+      margin-top: 1rem;
+    }
+  
+    .error-message {
+      background-color: #ffebee;
+      color: #c62828;
+    }
+  
+    .success-message {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+    }
+  
+    /* Footer Bottom */
+    .footer-bottom {
+      text-align: center;
+      padding: 0.5rem;
+      border-top: 1px solid #eee;
+      margin-top: 1rem;
+      color: #666;
+    }
   .footer-links {
     list-style: none;
     padding: 0;
