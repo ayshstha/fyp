@@ -31,13 +31,95 @@ const UserProfileDetails = ({ user, getProfilePicture }) => (
   </div>
 );
 
-const AdoptionHistory = () => (
-  <div className="section-container">
-    <h2>Adoption History</h2>
-    <p>Your adoption history will appear here.</p>
-  </div>
-);
+const AdoptionHistory = () => {
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  useEffect(() => {
+    const fetchAdoptionHistory = async () => {
+      try {
+        const response = await AxiosInstance.get("/adoption-requests/");
+        setRequests(response.data);
+        setError(null);
+      } catch (error) {
+        setError("Failed to load adoption history");
+        console.error("Error fetching adoption history:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAdoptionHistory();
+  }, []);
+
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      pending: { text: "Requested", className: "status-requested" },
+      approved: { text: "Accepted", className: "status-accepted" },
+      rejected: { text: "Rejected", className: "status-rejected" },
+    };
+    const { text, className } = statusMap[status] || {
+      text: "Unknown",
+      className: "status-unknown",
+    };
+    return <span className={`status-badge ${className}`}>{text}</span>;
+  };
+
+  if (loading)
+    return <div className="loading">Loading adoption history...</div>;
+  if (error) return <div className="error">{error}</div>;
+
+  return (
+    <div className="section-container">
+      <h2>Adoption History</h2>
+      {requests.length === 0 ? (
+        <p>No adoption requests found.</p>
+      ) : (
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Dog</th>
+                <th>Name</th>
+                <th>Booked Date</th>
+                <th>Pickup Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {requests.map((request) => (
+                <tr key={request.id}>
+                  <td>
+                    <img
+                      src={request.dog_details?.image || "/placeholder-dog.jpg"}
+                      alt={request.dog_details?.name}
+                      className="dog-thumbnail"
+                      onError={(e) => {
+                        e.target.src = "/placeholder-dog.jpg";
+                      }}
+                    />
+                  </td>
+                  <td>{request.dog_details?.name || "Unknown Dog"}</td>
+                  <td>
+                    {request.created_at
+                      ? new Date(request.created_at).toLocaleDateString()
+                      : "N/A"}
+                  </td>
+                  <td>
+                    {request.pickup_date
+                      ? new Date(request.pickup_date).toLocaleDateString()
+                      : "N/A"}
+                  </td>
+                  <td>{getStatusBadge(request.status)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
 const VetHistory = () => (
   <div className="section-container">
     <h2>Vet Appointments</h2>

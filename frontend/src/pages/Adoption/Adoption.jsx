@@ -126,7 +126,6 @@ const TermsAndConditions = ({ dog, onClose, onSubmit }) => {
 const DogProfile = ({ dog, onClose }) => {
   const [showTerms, setShowTerms] = useState(false);
 
-  // In DogProfile component
   const handleAdoptSubmit = async (data) => {
     try {
       const response = await AxiosInstance.post("/adoption-requests/", {
@@ -177,7 +176,7 @@ const DogProfile = ({ dog, onClose }) => {
               <h3>Behavior & Personality</h3>
               <p>{dog.behavior || "No behavior information available"}</p>
             </section>
-            // In DogProfile component
+     
             <button
               className="adopt-button"
               onClick={() => setShowTerms(true)}

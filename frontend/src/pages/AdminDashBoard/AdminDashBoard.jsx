@@ -44,6 +44,8 @@ const AdminDashBoard = () => {
         return <AdoptionRequests requests={adoptionRequests} />;
       case "add-dog":
         return <AddDog />;
+      case "adoption-history":
+        return <AdoptionHistory />;
       case "vet":
         return <VetAppointments />;
       case "feedback":
@@ -78,7 +80,9 @@ const AdminDashBoard = () => {
             🐶 Rescue Requests ({rescueRequests.length})
           </button>
           <button
-            className={`sidebar-btn ${activeTab === "adoption" ? "active" : ""}`}
+            className={`sidebar-btn ${
+              activeTab === "adoption" ? "active" : ""
+            }`}
             onClick={() => setActiveTab("adoption")}
           >
             🐾 Adoption Requests ({adoptionRequests.length})
@@ -89,6 +93,15 @@ const AdminDashBoard = () => {
           >
             ➕ Add New Dog
           </button>
+          <button
+            className={`sidebar-btn ${
+              activeTab === "adoption-history" ? "active" : ""
+            }`}
+            onClick={() => setActiveTab("adoption-history")}
+          >
+            📜 Adoption History
+          </button>
+
           <button
             className={`sidebar-btn ${activeTab === "vet" ? "active" : ""}`}
             onClick={() => setActiveTab("vet")}
@@ -478,6 +491,7 @@ const handleStatusChange = async (requestId, newStatus) => {
             <tr>
               <th>User</th>
               <th>Dog</th>
+              <th>Booked Date</th> {/* New column */}
               <th>Pickup Date</th>
               <th>Status</th>
               <th>Actions</th>
@@ -522,6 +536,11 @@ const handleStatusChange = async (requestId, newStatus) => {
                     ? new Date(request.pickup_date).toLocaleString()
                     : "N/A"}
                 </td>
+                <td>
+                  {request.created_at
+                    ? new Date(request.created_at).toLocaleString()
+                    : "N/A"}
+                </td>
                 <td>{request.status || "Unknown"}</td>
                 <td>
                   {request.status === "pending" && (
@@ -552,6 +571,116 @@ const handleStatusChange = async (requestId, newStatus) => {
   );
 };
 
+const AdoptionHistory = () => {
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        // Fetch all adoption requests
+        const response = await AxiosInstance.get("/adoption-requests/");
+        setHistory(response.data);
+      } catch (error) {
+        setError("Failed to load adoption history");
+        console.error("Error fetching adoption history:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHistory();
+  }, []);
+
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      approved: { label: "Approved", className: "status-accepted" },
+      rejected: { label: "Rejected", className: "status-rejected" },
+      pending: { label: "Pending", className: "status-pending" },
+    };
+
+    const { label, className } = statusMap[status] || {
+      label: "Unknown",
+      className: "",
+    };
+    return <span className={`status-badge ${className}`}>{label}</span>;
+  };
+
+  if (loading)
+    return <div className="loading">Loading adoption history...</div>;
+  if (error) return <div className="error">{error}</div>;
+
+  return (
+    <div className="dashboard-section">
+      <h2>Adoption History</h2>
+      <div className="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Dog</th>
+              <th>Booked Date</th> {/* New column */}
+              <th>Pickup Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {history.map((request) => (
+              <tr key={request.id}>
+                <td>
+                  <div className="user-info">
+                    <img
+                      src={
+                        request.user_details?.profile_picture ||
+                        "/default-avatar.png"
+                      }
+                      alt={request.user_details?.full_name}
+                      width="40"
+                      height="40"
+                      style={{ borderRadius: "50%", objectFit: "cover" }}
+                    />
+                    <div>
+                      <p>{request.user_details?.full_name || "Unknown User"}</p>
+                      <small>{request.user_details?.email || ""}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div className="dog-info">
+                    <img
+                      src={request.dog_details?.image || "/placeholder-dog.jpg"}
+                      alt={request.dog_details?.name}
+                      width="40"
+                      height="40"
+                      style={{ borderRadius: "4px", objectFit: "cover" }}
+                    />
+                    <div>
+                      <p>{request.dog_details?.name || "Unknown Dog"}</p>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  {request.pickup_date
+                    ? new Date(request.pickup_date).toLocaleString()
+                    : "N/A"}
+                </td>
+                <td>
+                  {request.created_at
+                    ? new Date(request.created_at).toLocaleString()
+                    : "N/A"}
+                </td>
+                <td>{getStatusBadge(request.status)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {history.length === 0 && (
+          <div className="no-results">No adoption requests found</div>
+        )}
+      </div>
+    </div>
+  );
+};
 const VetAppointments = () => (
   <div className="dashboard-section">
     <h2>Vet Appointments</h2>

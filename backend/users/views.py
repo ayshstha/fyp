@@ -15,6 +15,7 @@ from knox.models import AuthToken
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
 
+
 User = get_user_model()
 
 class LoginViewset(viewsets.ViewSet):
@@ -283,8 +284,8 @@ class AdoptionRequestViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.user.is_superuser:
-            return AdoptionRequest.objects.filter(status='pending')
-        return AdoptionRequest.objects.filter(
-            user=self.request.user,
-            status__in=['pending', 'approved']
-        )
+            # Return ALL requests for admins
+            return AdoptionRequest.objects.all()
+        # For regular users, return their own requests
+        return AdoptionRequest.objects.filter(user=self.request.user)
+    

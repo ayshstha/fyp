@@ -13,7 +13,8 @@ from .views import (
     EditProfileView, 
     ToggleFeaturedFeedback,
     AdoptionRequestViewSet,
-    UserViewset
+    UserViewset,
+  
 )
 
 # Define the router and register the viewsets
