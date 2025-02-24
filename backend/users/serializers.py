@@ -78,7 +78,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'full_name', 'profile_picture']
+        fields = ['id', 'full_name', 'profile_picture',]
 
     def get_profile_picture(self, obj):
         if obj.profile_picture:
@@ -113,4 +113,35 @@ class AdoptionRequestSerializer(serializers.ModelSerializer):
         
 
 
+from. models import RescueImage
+from. models import RescueRequest
+class RescueImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RescueImage
+        fields = ['image']
 
+class RescueRequestSerializer(serializers.ModelSerializer):
+    images = RescueImageSerializer(many=True, read_only=True)
+    uploaded_images = serializers.ListField(
+        child=serializers.ImageField(),
+        write_only=True,
+        required=False
+    )
+    user_details = UserSerializer(source='user', read_only=True)  # Add this line
+    class Meta:
+        model = RescueRequest
+        fields = [
+            'id', 'user', 'user_details', 'description',  # Include user_details here
+            'latitude', 'longitude', 'created_at', 'status', 
+            'images', 'uploaded_images'
+        ]
+        read_only_fields = ['user', 'created_at', 'status']
+
+    def create(self, validated_data):
+        uploaded_images = validated_data.pop('uploaded_images', [])
+        rescue_request = RescueRequest.objects.create(**validated_data)
+        
+        for image in uploaded_images:
+            RescueImage.objects.create(rescue_request=rescue_request, image=image)
+            
+        return rescue_request

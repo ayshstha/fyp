@@ -14,6 +14,7 @@ from .views import (
     ToggleFeaturedFeedback,
     AdoptionRequestViewSet,
     UserViewset,
+    RescueRequestViewSet
   
 )
 
@@ -26,6 +27,7 @@ router.register('Adoption', AdoptionViewSet, basename='Adoption')
 router.register('feedback', FeedbackViewSet, basename='feedback')
 # urls.py
 router.register('adoption-requests', AdoptionRequestViewSet, basename='adoption-requests')
+router.register('rescue-requests', RescueRequestViewSet, basename='rescue-requests')
 
 # Define URL patterns
 urlpatterns = [

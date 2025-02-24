@@ -289,3 +289,15 @@ class AdoptionRequestViewSet(viewsets.ModelViewSet):
         # For regular users, return their own requests
         return AdoptionRequest.objects.filter(user=self.request.user)
     
+class RescueRequestViewSet(viewsets.ModelViewSet):
+    queryset = RescueRequest.objects.all()
+    serializer_class = RescueRequestSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return RescueRequest.objects.all().order_by('-created_at')
+        return RescueRequest.objects.filter(user=self.request.user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

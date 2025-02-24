@@ -13,32 +13,40 @@ import {
   AlertCircle,
 } from "lucide-react";
 import Rescue from "../../components/Rescue/Rescue";
+import AxiosInstance from "../../components/AxiosInstance";
 import "./PetRescue.css";
 
-// OpenStreetMap Component
-const OpenStreetMapComponent = ({ onLocationSelect, initialLocation }) => {
+const rescueIcon = new L.Icon({
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+  iconSize: [40, 40],
+  iconAnchor: [20, 40],
+  popupAnchor: [0, -40],
+});
+
+const DEFAULT_COORDS = {
+  lat: 27.7172,
+  lng: 85.324,
+};
+
+const OpenStreetMapComponent = ({ initialLocation, onLocationSelect }) => {
   const mapRef = useRef(null);
   const markerRef = useRef(null);
 
   useEffect(() => {
-    const map = L.map(mapRef.current).setView(
-      [initialLocation.lat, initialLocation.lng],
-      13
-    );
+    const coords = initialLocation || DEFAULT_COORDS;
+    const map = L.map(mapRef.current).setView([coords.lat, coords.lng], 13);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
 
-    markerRef.current = L.marker([
-      initialLocation.lat,
-      initialLocation.lng,
-    ]).addTo(map);
+    markerRef.current = L.marker([coords.lat, coords.lng], {
+      icon: rescueIcon,
+      draggable: true,
+    }).addTo(map);
 
-    map.on("click", (e) => {
-      const { lat, lng } = e.latlng;
-      markerRef.current.setLatLng([lat, lng]);
+    markerRef.current.on("dragend", (e) => {
+      const { lat, lng } = e.target.getLatLng();
       onLocationSelect({ lat, lng });
     });
 
@@ -49,7 +57,7 @@ const OpenStreetMapComponent = ({ onLocationSelect, initialLocation }) => {
     <div
       className="map-container"
       ref={mapRef}
-      style={{ height: "400px", width: "100%" }}
+      style={{ height: "400px", width: "100%", borderRadius: "8px" }}
     />
   );
 };
@@ -58,12 +66,11 @@ const PetRescue = () => {
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     images: [],
-    location: { lat: null, lng: null },
+    location: DEFAULT_COORDS,
     description: "",
   });
   const [errors, setErrors] = useState({});
   const [previewImages, setPreviewImages] = useState([]);
-  const [currentLocation, setCurrentLocation] = useState(null);
   const [loadingLocation, setLoadingLocation] = useState(true);
 
   const handleOpenModal = () => setShowModal(true);
@@ -74,35 +81,81 @@ const PetRescue = () => {
     setPreviewImages([]);
     setFormData({
       images: [],
-      location: { lat: null, lng: null },
+      location: DEFAULT_COORDS,
       description: "",
     });
+  };
+  const handleLocationSelect = (location) => {
+    setFormData((prev) => ({
+      ...prev,
+      location,
+    }));
   };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    setFormData({ ...formData, images: files });
-    const previews = files.map((file) => URL.createObjectURL(file));
-    setPreviewImages(previews);
+    const totalFiles = files.length + formData.images.length;
+
+    if (totalFiles > 5) {
+      setErrors({ ...errors, images: "Maximum 5 images allowed." });
+      return;
+    }
+    setErrors({ ...errors, images: "" });
+
+    setFormData((prev) => ({
+      ...prev,
+      images: [...prev.images, ...files].slice(0, 5),
+    }));
+
+    const newPreviews = files.map((file) => URL.createObjectURL(file));
+    setPreviewImages((prev) => [...prev, ...newPreviews].slice(0, 5));
+  };
+
+  const handleRemoveImage = (indexToRemove) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, index) => index !== indexToRemove),
+    }));
+    setPreviewImages((prev) =>
+      prev.filter((_, index) => index !== indexToRemove)
+    );
   };
 
   const validateForm = () => {
     const newErrors = {};
     if (formData.images.length === 0)
-      newErrors.images = "Please upload at least one image";
+      newErrors.images = "Please upload at least one image.";
     if (!formData.location.lat || !formData.location.lng)
-      newErrors.location = "Please pin a location on the map";
+      newErrors.location = "Please pin a location on the map.";
     if (!formData.description.trim())
-      newErrors.description = "Description is required";
+      newErrors.description = "Description is required.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      console.log("Form submitted:", formData);
+    if (!validateForm()) return;
+
+    try {
+      const formPayload = new FormData();
+      formPayload.append("latitude", formData.location.lat);
+      formPayload.append("longitude", formData.location.lng);
+      formPayload.append("description", formData.description);
+
+      formData.images.forEach((image) => {
+        formPayload.append("uploaded_images", image);
+      });
+
+      await AxiosInstance.post("/rescue-requests/", formPayload, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
       handleCloseModal();
+      alert("Rescue request submitted successfully!");
+    } catch (error) {
+      console.error("Submission error:", error);
+      alert("Failed to submit request. Please try again.");
     }
   };
 
@@ -110,10 +163,6 @@ const PetRescue = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setCurrentLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
           setFormData((prev) => ({
             ...prev,
             location: {
@@ -123,21 +172,15 @@ const PetRescue = () => {
           }));
           setLoadingLocation(false);
         },
-        (error) => {
-          console.error("Error getting location:", error);
-          setCurrentLocation({ lat: 37.7749, lng: -122.4194 }); // Fallback to San Francisco
-          setLoadingLocation(false);
-        }
+        () => setLoadingLocation(false)
       );
     } else {
-      setCurrentLocation({ lat: 37.7749, lng: -122.4194 }); // Fallback to San Francisco
       setLoadingLocation(false);
     }
   }, []);
 
   return (
     <div className="rescue-container">
-      {/* Intro Section */}
       <section className="rescue-intro">
         <div className="intro-content">
           <h1>Give Hope to Homeless Dogs</h1>
@@ -151,10 +194,8 @@ const PetRescue = () => {
         </div>
       </section>
 
-      {/* Rescue Component */}
       <Rescue showButton={false} />
 
-      {/* Video Section */}
       <section className="video-section">
         <h2>See Our Rescue Work</h2>
         <div className="video-container">
@@ -227,7 +268,6 @@ const PetRescue = () => {
         </div>
       </section>
 
-      {/* Modal Section */}
       {showModal && (
         <div className="modal-overlay animate-fade-in">
           <div className="modal-content">
@@ -241,7 +281,6 @@ const PetRescue = () => {
             </div>
 
             <form className="rescue-form" onSubmit={handleSubmit}>
-              {/* Image Upload Section */}
               <div className="form-group">
                 <label>
                   <Camera className="form-icon" /> Upload Pictures
@@ -265,6 +304,13 @@ const PetRescue = () => {
                     {previewImages.map((url, index) => (
                       <div key={index} className="preview-image">
                         <img src={url} alt={`Preview ${index + 1}`} />
+                        <button
+                          type="button"
+                          className="remove-image-btn"
+                          onClick={() => handleRemoveImage(index)}
+                        >
+                          <X size={16} />
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -276,22 +322,17 @@ const PetRescue = () => {
                 )}
               </div>
 
-              {/* Location Section */}
               <div className="form-group">
                 <label>
                   <MapPin className="form-icon" /> Location
                 </label>
                 {loadingLocation ? (
                   <div>Loading map...</div>
-                ) : currentLocation ? (
-                  <OpenStreetMapComponent
-                    onLocationSelect={(location) =>
-                      setFormData({ ...formData, location })
-                    }
-                    initialLocation={currentLocation}
-                  />
                 ) : (
-                  <div>Error loading map</div>
+                  <OpenStreetMapComponent
+                    initialLocation={formData.location}
+                    onLocationSelect={handleLocationSelect}
+                  />
                 )}
                 {errors.location && (
                   <span className="error-message">
@@ -300,7 +341,6 @@ const PetRescue = () => {
                 )}
               </div>
 
-              {/* Description Section */}
               <div className="form-group">
                 <label>
                   <FileText className="form-icon" /> Description

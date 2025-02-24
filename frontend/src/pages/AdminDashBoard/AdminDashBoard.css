@@ -226,25 +226,30 @@ button.feature-btn:hover {
 
 
 
-/* Status Badge Styles */
+.image-gallery {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
 .status-badge {
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-size: 14px;
-    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
 }
 
 .status-badge.pending {
-    background-color: #f1c40f;
-    color: #fff;
+    background-color: #ffd700;
+    color: #000;
 }
 
-.status-badge.approved {
-    background-color: #2ecc71;
-    color: #fff;
+.status-badge.processed {
+    background-color: #90EE90;
+    color: #000;
 }
 
-.status-badge.rejected {
-    background-color: #e74c3c;
-    color: #fff;
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }

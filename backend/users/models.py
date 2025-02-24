@@ -93,7 +93,21 @@ class AdoptionRequest(models.Model):
     def __str__(self):
         return f"{self.user.email} - {self.dog.name} ({self.status})"
 
-    # Remove the Meta class with unique_together
+class RescueRequest(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    description = models.TextField()
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[('pending', 'Pending'), ('processed', 'Processed')],
+        default='pending'
+    )
+
+class RescueImage(models.Model):
+    rescue_request = models.ForeignKey(RescueRequest, related_name='images', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='rescue_images/')
 
 @receiver(reset_password_token_created)
 def password_reset_token_created(reset_password_token, *args, **kwargs):

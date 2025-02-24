@@ -398,37 +398,92 @@ const AdminProfile = () => {
     </div>
   );
 };
+const RescueRequests = ({ requests }) => {
+  const [loading, setLoading] = useState(true);
 
-const RescueRequests = ({ requests }) => (
-  <div className="dashboard-section">
-    <h2>Rescue Requests</h2>
-    <div className="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>User</th>
-            <th>Location</th>
-            <th>Status</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {requests.map((request) => (
-            <tr key={request.id}>
-              <td>{request.id}</td>
-              <td>{request.user}</td>
-              <td>{request.location}</td>
-              <td>{request.status}</td>
-              <td>{new Date(request.date).toLocaleDateString()}</td>
+  useEffect(() => {
+    // Simulate loading if needed
+    if (requests.length > 0) {
+      setLoading(false);
+    }
+  }, [requests]);
+
+  if (loading) return <div>Loading rescue requests...</div>;
+
+  return (
+    <div className="dashboard-section">
+      <h2>Rescue Requests ({requests.length})</h2>
+      <div className="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Images</th>
+              <th>Location</th>
+              <th>Description</th>
+              <th>Report Time</th>
+              <th>Status</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {requests.map((request) => (
+              <tr key={request.id}>
+                <td>
+                  <div className="user-info">
+                    <img
+                      src={
+                        request.user_details?.profile_picture ||
+                        "/default-avatar.png"
+                      }
+                      alt={request.user_details?.full_name}
+                      width="50"
+                      height="50"
+                      style={{ borderRadius: "50%" }}
+                    />
+                    <div>
+                      <p>{request.user_details?.full_name || "Unknown User"}</p>
+                      <small>{request.user_details?.email || ""}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div className="image-gallery">
+                    {request.images.map((image, index) => (
+                      <img
+                        key={index}
+                        src={image.image}
+                        alt={`Rescue ${index + 1}`}
+                        width="50"
+                        height="50"
+                        style={{ marginRight: "5px", borderRadius: "4px" }}
+                      />
+                    ))}
+                  </div>
+                </td>
+                <td>
+                  <a
+                    href={`https://maps.google.com/?q=${request.latitude},${request.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View on Map
+                  </a>
+                </td>
+                <td>{request.description}</td>
+                <td>{new Date(request.created_at).toLocaleString()}</td>
+                <td>
+                  <span className={`status-badge ${request.status}`}>
+                    {request.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
-);
-
+  );
+};
 const AdoptionRequests = () => {
   const [requests, setRequests] = useState([]);
 
