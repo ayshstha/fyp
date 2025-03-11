@@ -7,11 +7,15 @@ import AdoptionComponent from "../../components/Adoption/Adoption";
 const TermsAndConditions = ({ dog, onClose, onSubmit }) => {
   const [agreed, setAgreed] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");
+  const [adoptionReason, setAdoptionReason] = useState(""); // New state for adoption reason
 
-  // In TermsAndConditions component
   const handleSubmit = () => {
     const isoDate = new Date(selectedDate).toISOString();
-    onSubmit({ agreed, selectedDate: isoDate });
+    onSubmit({
+      agreed,
+      selectedDate: isoDate,
+      adoptionReason, // Include adoption reason in submission
+    });
   };
 
   return (
@@ -76,6 +80,17 @@ const TermsAndConditions = ({ dog, onClose, onSubmit }) => {
             </div>
           </div>
 
+          {/* New Adoption Reason Section */}
+          <div className="adoption-reason">
+            <h3>Why do you want to adopt {dog.name}?</h3>
+            <textarea
+              value={adoptionReason}
+              onChange={(e) => setAdoptionReason(e.target.value)}
+              placeholder="Please explain why you want to adopt this dog..."
+              required
+            />
+          </div>
+
           <div className="pickup-time">
             <h3>Select Pickup Time</h3>
             <div className="calendar-wrapper">
@@ -109,10 +124,10 @@ const TermsAndConditions = ({ dog, onClose, onSubmit }) => {
             </button>
             <button
               className={`submit-button ${
-                !agreed || !selectedDate ? "disabled" : ""
+                !agreed || !selectedDate || !adoptionReason ? "disabled" : ""
               }`}
               onClick={handleSubmit}
-              disabled={!agreed || !selectedDate}
+              disabled={!agreed || !selectedDate || !adoptionReason}
             >
               Submit Adoption Request
             </button>
@@ -131,6 +146,7 @@ const DogProfile = ({ dog, onClose }) => {
       const response = await AxiosInstance.post("/adoption-requests/", {
         dog: dog.id,
         pickup_date: data.selectedDate,
+        adoption_reason: data.adoptionReason, // Include adoption reason in the request
       });
 
       if (response.status === 201) {
@@ -176,7 +192,7 @@ const DogProfile = ({ dog, onClose }) => {
               <h3>Behavior & Personality</h3>
               <p>{dog.behavior || "No behavior information available"}</p>
             </section>
-     
+
             <button
               className="adopt-button"
               onClick={() => setShowTerms(true)}
@@ -201,24 +217,25 @@ const DogProfile = ({ dog, onClose }) => {
     </div>
   );
 };
+
 const Adoption = () => {
   const [availableDogs, setAvailableDogs] = useState([]);
   const [selectedDog, setSelectedDog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-const fetchDogs = async () => {
-  try {
-    const response = await AxiosInstance.get("/Adoption/");
-    setAvailableDogs(response.data);
-    setError(null);
-  } catch (err) {
-    setError("Failed to load dogs. Please try again later.");
-    console.error("Error fetching dogs:", err);
-  } finally {
-    setLoading(false);
-  }
-};
+  const fetchDogs = async () => {
+    try {
+      const response = await AxiosInstance.get("/Adoption/");
+      setAvailableDogs(response.data);
+      setError(null);
+    } catch (err) {
+      setError("Failed to load dogs. Please try again later.");
+      console.error("Error fetching dogs:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchDogs();
@@ -301,4 +318,5 @@ const fetchDogs = async () => {
     </div>
   );
 };
+
 export default Adoption;

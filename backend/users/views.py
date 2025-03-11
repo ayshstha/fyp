@@ -296,8 +296,28 @@ class RescueRequestViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.user.is_superuser:
+            # Return ALL rescue requests for admins
             return RescueRequest.objects.all().order_by('-created_at')
+        # For regular users, return their own rescue requests
         return RescueRequest.objects.filter(user=self.request.user).order_by('-created_at')
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+        
+class UpdateRescueRequestStatus(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, request_id):
+        try:
+            rescue_request = RescueRequest.objects.get(id=request_id)
+        except RescueRequest.DoesNotExist:
+            return Response({"error": "Rescue request not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        new_status = request.data.get('status')
+        if new_status not in ['rescued', 'declined']:
+            return Response({"error": "Invalid status. Use 'rescued' or 'declined'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        rescue_request.status = new_status
+        rescue_request.save()
+
+        return Response({"message": f"Rescue request status updated to {new_status}"}, status=status.HTTP_200_OK)

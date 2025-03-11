@@ -14,7 +14,8 @@ from .views import (
     ToggleFeaturedFeedback,
     AdoptionRequestViewSet,
     UserViewset,
-    RescueRequestViewSet
+    RescueRequestViewSet,
+    UpdateRescueRequestStatus
   
 )
 
@@ -37,6 +38,7 @@ urlpatterns = [
     path('user/edit-profile/', EditProfileView.as_view(), name='edit-profile'),  
     path('', include(router.urls)),  # Include router URLs (feedback is here)
     path('feedback/toggle-featured/<int:feedback_id>/', ToggleFeaturedFeedback.as_view(), name='toggle-featured-feedback'),
+    path('rescue-requests/<int:request_id>/update-status/', UpdateRescueRequestStatus.as_view(), name='update-rescue-request-status'),
     
 ]
 

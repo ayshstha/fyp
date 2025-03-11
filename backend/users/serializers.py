@@ -105,9 +105,8 @@ class AdoptionRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdoptionRequest
         fields = [
-            'id', 'user', 'user_details', 
-            'dog', 'dog_details', 'pickup_date', 
-            'status', 'created_at'
+            'id', 'user', 'user_details', 'dog', 'dog_details', 
+            'pickup_date', 'status', 'created_at', 'adoption_reason'  # Add here
         ]
         read_only_fields = ['id', 'created_at', 'user']
         

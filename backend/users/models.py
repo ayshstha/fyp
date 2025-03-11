@@ -84,6 +84,7 @@ class AdoptionRequest(models.Model):
     dog = models.ForeignKey(Adoption, on_delete=models.CASCADE)
     pickup_date = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
+    adoption_reason = models.TextField(blank=True, null=True)
     status = models.CharField(
         max_length=20,
         choices=[('pending', 'Pending'), ('approved', 'Approved'), ('rejected', 'Rejected')],
@@ -100,11 +101,10 @@ class RescueRequest(models.Model):
     longitude = models.FloatField()
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(
-        max_length=20,
-        choices=[('pending', 'Pending'), ('processed', 'Processed')],
-        default='pending'
-    )
-
+    max_length=20,
+    choices=[('pending', 'Pending'), ('rescued', 'Rescued'), ('declined', 'Declined')],
+    default='pending'
+  )
 class RescueImage(models.Model):
     rescue_request = models.ForeignKey(RescueRequest, related_name='images', on_delete=models.CASCADE)
     image = models.ImageField(upload_to='rescue_images/')
@@ -137,4 +137,3 @@ def password_reset_token_created(reset_password_token, *args, **kwargs):
 
     msg.attach_alternative(html_message, "text/html")
     msg.send()
-

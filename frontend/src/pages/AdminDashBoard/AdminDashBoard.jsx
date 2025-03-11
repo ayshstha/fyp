@@ -8,13 +8,35 @@ const AdminDashBoard = () => {
   const [users, setUsers] = useState([]);
   const [rescueRequests, setRescueRequests] = useState([]);
   const navigate = useNavigate();
+  const [rescueHistory, setRescueHistory] = useState([]);
   const [adoptionRequests, setAdoptionRequests] = useState([]);
 
+  const fetchRescueRequests = async () => {
+    try {
+      const response = await AxiosInstance.get("/rescue-requests/");
+      setRescueRequests(response.data);
+    } catch (error) {
+      console.error("Error fetching rescue requests:", error);
+    }
+  };
+
+  const fetchRescueHistory = async () => {
+    try {
+      const response = await AxiosInstance.get("/rescue-requests/");
+      setRescueHistory(response.data); // Fetch all rescue requests for history
+      console.log("Rescue History Data:", response.data); // Debugging: Log the data
+    } catch (error) {
+      console.error("Error fetching rescue history:", error);
+    }
+  };
+
   useEffect(() => {
+    fetchRescueRequests();
+    fetchRescueHistory();
     // Fetch initial data
     AxiosInstance.get("/users/")
       .then((response) => {
-        // Filter out superusers 
+        // Filter out superusers
         const normalUsers = response.data.filter((user) => !user.is_superuser);
         setUsers(normalUsers);
       })
@@ -24,8 +46,6 @@ const AdminDashBoard = () => {
       .then((response) => setRescueRequests(response.data))
       .catch(console.error);
   }, []);
-
-  
 
   const handleLogout = () => {
     localStorage.removeItem("Token");
@@ -39,7 +59,14 @@ const AdminDashBoard = () => {
       case "users":
         return <TotalUsers users={users} />;
       case "rescue":
-        return <RescueRequests requests={rescueRequests} />;
+        return (
+          <RescueRequests
+            requests={rescueRequests}
+            fetchRescueRequests={fetchRescueRequests}
+          />
+        );
+      case "rescue-history":
+        return <RescueHistory history={rescueHistory} />;
       case "adoption":
         return <AdoptionRequests requests={adoptionRequests} />;
       case "add-dog":
@@ -78,6 +105,14 @@ const AdminDashBoard = () => {
             onClick={() => setActiveTab("rescue")}
           >
             🐶 Rescue Requests ({rescueRequests.length})
+          </button>
+          <button
+            className={`sidebar-btn ${
+              activeTab === "rescue-history" ? "active" : ""
+            }`}
+            onClick={() => setActiveTab("rescue-history")}
+          >
+            📜 Rescue History
           </button>
           <button
             className={`sidebar-btn ${
@@ -125,7 +160,11 @@ const AdminDashBoard = () => {
             💰 Donations
           </button>
         </div>
-        <button className="sidebar-btn logout-btn" onClick={handleLogout}>
+        <button
+          className="sidebar-btn logout-btn"
+          style={{ backgroundColor: "green" }}
+          onClick={handleLogout}
+        >
           🚪 Logout
         </button>
       </div>
@@ -398,21 +437,35 @@ const AdminProfile = () => {
     </div>
   );
 };
-const RescueRequests = ({ requests }) => {
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Simulate loading if needed
-    if (requests.length > 0) {
-      setLoading(false);
+const RescueRequests = ({ requests, fetchRescueRequests }) => {
+  const handleStatusChange = async (requestId, newStatus) => {
+    try {
+      const response = await AxiosInstance.post(
+        `/rescue-requests/${requestId}/update-status/`,
+        { status: newStatus }
+      );
+      console.log("Status update response:", response.data);
+
+      // Refresh the list of rescue requests after updating the status
+      fetchRescueRequests();
+    } catch (error) {
+      console.error(
+        "Error updating status:",
+        error.response?.data || error.message
+      );
+      alert("Failed to update status. Please try again.");
     }
-  }, [requests]);
+  };
 
-  if (loading) return <div>Loading rescue requests...</div>;
+  // Filter requests to only show pending ones
+  const pendingRequests = requests.filter(
+    (request) => request.status === "pending"
+  );
 
   return (
     <div className="dashboard-section">
-      <h2>Rescue Requests ({requests.length})</h2>
+      <h2>Rescue Requests ({pendingRequests.length})</h2>
       <div className="table-container">
         <table>
           <thead>
@@ -423,10 +476,11 @@ const RescueRequests = ({ requests }) => {
               <th>Description</th>
               <th>Report Time</th>
               <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {requests.map((request) => (
+            {pendingRequests.map((request) => (
               <tr key={request.id}>
                 <td>
                   <div className="user-info">
@@ -476,6 +530,26 @@ const RescueRequests = ({ requests }) => {
                     {request.status}
                   </span>
                 </td>
+                <td>
+                  {request.status === "pending" && (
+                    <>
+                      <button
+                        onClick={() =>
+                          handleStatusChange(request.id, "rescued")
+                        }
+                      >
+                        Rescued
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleStatusChange(request.id, "declined")
+                        }
+                      >
+                        Decline
+                      </button>
+                    </>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -484,6 +558,7 @@ const RescueRequests = ({ requests }) => {
     </div>
   );
 };
+
 const AdoptionRequests = () => {
   const [requests, setRequests] = useState([]);
 
@@ -499,36 +574,35 @@ const AdoptionRequests = () => {
     fetchRequests();
   }, []);
 
-  // In AdoptionRequests component
-const handleStatusChange = async (requestId, newStatus) => {
-  try {
-    const originalRequests = [...requests];
+  const handleStatusChange = async (requestId, newStatus) => {
+    try {
+      const originalRequests = [...requests];
 
-    // Optimistic update
-    setRequests((prev) => prev.filter((request) => request.id !== requestId));
+      // Optimistic update
+      setRequests((prev) => prev.filter((request) => request.id !== requestId));
 
-    await AxiosInstance.patch(`/adoption-requests/${requestId}/`, {
-      status: newStatus,
-    });
+      await AxiosInstance.patch(`/adoption-requests/${requestId}/`, {
+        status: newStatus,
+      });
 
-    // Refresh dog list after rejection
-    if (newStatus === "rejected") {
-      const dogResponse = await AxiosInstance.get("/Adoption/");
-      setAvailableDogs(dogResponse.data);
+      // Refresh dog list after rejection
+      if (newStatus === "rejected") {
+        const dogResponse = await AxiosInstance.get("/Adoption/");
+        setAvailableDogs(dogResponse.data);
+      }
+    } catch (error) {
+      console.error("Error:", error.response?.data);
+      setRequests(originalRequests);
+
+      const errorMessage =
+        error.response?.data?.detail ||
+        error.response?.data?.status?.[0] ||
+        `Failed to ${newStatus} request. Please try again.`;
+
+      alert(errorMessage);
     }
-  } catch (error) {
-    console.error("Error:", error.response?.data);
-    setRequests(originalRequests);
+  };
 
-    const errorMessage =
-      error.response?.data?.detail ||
-      error.response?.data?.status?.[0] ||
-      `Failed to ${newStatus} request. Please try again.`;
-
-    alert(errorMessage);
-  }
-};
-  // Safe data access with fallbacks
   const getDogImage = (request) => {
     return request.dog_details?.image || "/placeholder-dog.jpg";
   };
@@ -537,23 +611,29 @@ const handleStatusChange = async (requestId, newStatus) => {
     return request.user_details?.profile_picture || "/default-avatar.png";
   };
 
+  // Filter requests to only show pending requests
+  const pendingRequests = requests.filter(
+    (request) => request.status === "pending"
+  );
+
   return (
     <div className="dashboard-section">
-      <h2>Adoption Requests ({requests.length})</h2>
+      <h2>Adoption Requests ({pendingRequests.length})</h2>
       <div className="table-container">
         <table>
           <thead>
             <tr>
               <th>User</th>
               <th>Dog</th>
-              <th>Booked Date</th> {/* New column */}
+              <th>Adoption Reason</th>
+              <th>Request Date</th>
               <th>Pickup Date</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {requests.map((request) => (
+            {pendingRequests.map((request) => (
               <tr key={request.id}>
                 <td>
                   <div className="user-info">
@@ -586,36 +666,35 @@ const handleStatusChange = async (requestId, newStatus) => {
                     <p>{request.dog_details?.name || "Unknown Dog"}</p>
                   </div>
                 </td>
-                <td>
-                  {request.pickup_date
-                    ? new Date(request.pickup_date).toLocaleString()
-                    : "N/A"}
+                <td className="adoption-reason-cell">
+                  {request.adoption_reason || "N/A"}
                 </td>
                 <td>
                   {request.created_at
-                    ? new Date(request.created_at).toLocaleString()
+                    ? new Date(request.created_at).toLocaleDateString()
                     : "N/A"}
                 </td>
-                <td>{request.status || "Unknown"}</td>
                 <td>
-                  {request.status === "pending" && (
-                    <>
-                      <button
-                        onClick={() =>
-                          handleStatusChange(request.id, "approved")
-                        }
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleStatusChange(request.id, "rejected")
-                        }
-                      >
-                        Decline
-                      </button>
-                    </>
-                  )}
+                  {request.pickup_date
+                    ? new Date(request.pickup_date).toLocaleDateString()
+                    : "N/A"}
+                </td>
+                <td>
+                  <span className={`status-badge ${request.status}`}>
+                    {request.status}
+                  </span>
+                </td>
+                <td>
+                  <button
+                    onClick={() => handleStatusChange(request.id, "approved")}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleStatusChange(request.id, "rejected")}
+                  >
+                    Decline
+                  </button>
                 </td>
               </tr>
             ))}
@@ -625,7 +704,6 @@ const handleStatusChange = async (requestId, newStatus) => {
     </div>
   );
 };
-
 const AdoptionHistory = () => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -634,7 +712,6 @@ const AdoptionHistory = () => {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        // Fetch all adoption requests
         const response = await AxiosInstance.get("/adoption-requests/");
         setHistory(response.data);
       } catch (error) {
@@ -674,7 +751,8 @@ const AdoptionHistory = () => {
             <tr>
               <th>User</th>
               <th>Dog</th>
-              <th>Booked Date</th> {/* New column */}
+              <th>Adoption Reason</th>
+              <th>Request Date</th>
               <th>Pickup Date</th>
               <th>Status</th>
             </tr>
@@ -714,14 +792,17 @@ const AdoptionHistory = () => {
                     </div>
                   </div>
                 </td>
-                <td>
-                  {request.pickup_date
-                    ? new Date(request.pickup_date).toLocaleString()
-                    : "N/A"}
+                <td className="adoption-reason-cell">
+                  {request.adoption_reason || "N/A"}
                 </td>
                 <td>
                   {request.created_at
-                    ? new Date(request.created_at).toLocaleString()
+                    ? new Date(request.created_at).toLocaleDateString()
+                    : "N/A"}
+                </td>
+                <td>
+                  {request.pickup_date
+                    ? new Date(request.pickup_date).toLocaleDateString()
                     : "N/A"}
                 </td>
                 <td>{getStatusBadge(request.status)}</td>
@@ -736,13 +817,104 @@ const AdoptionHistory = () => {
     </div>
   );
 };
+
+const RescueHistory = ({ history }) => {
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      rescued: { label: "Rescued", className: "status-rescued" },
+      pending: { label: "Pending", className: "status-pending" },
+      declined: { label: "Declined", className: "status-declined" },
+    };
+
+    const { label, className } = statusMap[status] || {
+      label: "Unknown",
+      className: "",
+    };
+    return <span className={`status-badge ${className}`}>{label}</span>;
+  };
+
+  console.log("Rescue History Data in Component:", history); // Debugging: Log the data
+
+  return (
+    <div className="dashboard-section">
+      <h2>Rescue History</h2>
+      <div className="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Images</th>
+              <th>Location</th>
+              <th>Description</th>
+              <th>Report Time</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {history.map((request) => (
+              <tr key={request.id}>
+                <td>
+                  <div className="user-info">
+                    <img
+                      src={
+                        request.user_details?.profile_picture ||
+                        "/default-avatar.png"
+                      }
+                      alt={request.user_details?.full_name}
+                      width="50"
+                      height="50"
+                      style={{ borderRadius: "50%" }}
+                    />
+                    <div>
+                      <p>{request.user_details?.full_name || "Unknown User"}</p>
+                      <small>{request.user_details?.email || ""}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div className="image-gallery">
+                    {request.images.map((image, index) => (
+                      <img
+                        key={index}
+                        src={image.image}
+                        alt={`Rescue ${index + 1}`}
+                        width="50"
+                        height="50"
+                        style={{ marginRight: "5px", borderRadius: "4px" }}
+                      />
+                    ))}
+                  </div>
+                </td>
+                <td>
+                  <a
+                    href={`https://maps.google.com/?q=${request.latitude},${request.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View on Map
+                  </a>
+                </td>
+                <td>{request.description}</td>
+                <td>{new Date(request.created_at).toLocaleString()}</td>
+                <td>{getStatusBadge(request.status)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {history.length === 0 && (
+          <div className="no-results">No rescue history found</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const VetAppointments = () => (
   <div className="dashboard-section">
     <h2>Vet Appointments</h2>
     <p>List of upcoming vet appointments will appear here.</p>
   </div>
 );
-
 
 const Donations = () => (
   <div className="dashboard-section">
@@ -774,10 +946,16 @@ const Feedbacks = () => {
 
   const toggleFeatured = async (feedbackId) => {
     try {
-      const response = await AxiosInstance.post(`/feedback/toggle-featured/${feedbackId}/`);
-      setFeedbacks(feedbacks.map(feedback => 
-        feedback.id === feedbackId ? { ...feedback, featured: response.data.featured } : feedback
-      ));
+      const response = await AxiosInstance.post(
+        `/feedback/toggle-featured/${feedbackId}/`
+      );
+      setFeedbacks(
+        feedbacks.map((feedback) =>
+          feedback.id === feedbackId
+            ? { ...feedback, featured: response.data.featured }
+            : feedback
+        )
+      );
     } catch (error) {
       console.error("Error toggling featured status:", error);
     }

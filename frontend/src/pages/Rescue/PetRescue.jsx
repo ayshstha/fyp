@@ -34,7 +34,7 @@ const OpenStreetMapComponent = ({ initialLocation, onLocationSelect }) => {
 
   useEffect(() => {
     const coords = initialLocation || DEFAULT_COORDS;
-    const map = L.map(mapRef.current).setView([coords.lat, coords.lng], 13);
+    const map = L.map(mapRef.current).setView([coords.lat, coords.lng], 18);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap contributors",

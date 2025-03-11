@@ -81,7 +81,8 @@ const AdoptionHistory = () => {
               <tr>
                 <th>Dog</th>
                 <th>Name</th>
-                <th>Booked Date</th>
+                <th>Adoption Reason</th> {/* New column */}
+                <th>Request Date</th>
                 <th>Pickup Date</th>
                 <th>Status</th>
               </tr>
@@ -100,6 +101,10 @@ const AdoptionHistory = () => {
                     />
                   </td>
                   <td>{request.dog_details?.name || "Unknown Dog"}</td>
+                  <td className="adoption-reason-cell">
+                    {request.adoption_reason || "N/A"}{" "}
+                    {/* Display adoption reason */}
+                  </td>
                   <td>
                     {request.created_at
                       ? new Date(request.created_at).toLocaleDateString()
@@ -120,6 +125,7 @@ const AdoptionHistory = () => {
     </div>
   );
 };
+
 const VetHistory = () => (
   <div className="section-container">
     <h2>Vet Appointments</h2>
@@ -312,7 +318,93 @@ const ChangePassword = () => {
   );
 };
 
-// Main UserProfile component
+const RescueHistory = ({ userId }) => {
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchRescueHistory = async () => {
+      try {
+        const response = await AxiosInstance.get("/rescue-requests/");
+        const userRequests = response.data.filter(
+          (request) => request.user === userId
+        );
+        setRequests(userRequests);
+        setError(null);
+      } catch (error) {
+        setError("Failed to load rescue history");
+        console.error("Error fetching rescue history:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRescueHistory();
+  }, [userId]);
+
+  if (loading) return <div className="loading">Loading rescue history...</div>;
+  if (error) return <div className="error">{error}</div>;
+
+  return (
+    <div className="section-container">
+      <h2>Rescue History</h2>
+      {requests.length === 0 ? (
+        <p>No rescue requests found.</p>
+      ) : (
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Images</th>
+                <th>Location</th>
+                <th>Description</th>
+                <th>Report Time</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {requests.map((request) => (
+                <tr key={request.id}>
+                  <td>
+                    <div className="image-gallery">
+                      {request.images.map((image, index) => (
+                        <img
+                          key={index}
+                          src={image.image}
+                          alt={`Rescue ${index + 1}`}
+                          width="50"
+                          height="50"
+                          style={{ marginRight: "5px", borderRadius: "4px" }}
+                        />
+                      ))}
+                    </div>
+                  </td>
+                  <td>
+                    <a
+                      href={`https://maps.google.com/?q=${request.latitude},${request.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View on Map
+                    </a>
+                  </td>
+                  <td>{request.description}</td>
+                  <td>{new Date(request.created_at).toLocaleString()}</td>
+                  <td>
+                    <span className={`status-badge ${request.status}`}>
+                      {request.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const UserProfile = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [user, setUser] = useState(null);
@@ -359,6 +451,8 @@ const UserProfile = () => {
         return <EditProfile user={user} />;
       case "password":
         return <ChangePassword />;
+      case "rescue":
+        return <RescueHistory userId={user?.id} />; // Pass userId to RescueHistory
       default:
         return (
           <UserProfileDetails
@@ -404,6 +498,12 @@ const UserProfile = () => {
           onClick={() => setActiveTab("password")}
         >
           🔒 Change Password
+        </button>
+        <button
+          className={`sidebar-btn ${activeTab === "rescue" ? "active" : ""}`}
+          onClick={() => setActiveTab("rescue")}
+        >
+          🐕 Rescue History
         </button>
       </div>
       <div className="content">{renderContent()}</div>
