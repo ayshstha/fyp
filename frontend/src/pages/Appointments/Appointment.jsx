@@ -1,26 +1,35 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Calendar,
   Clock,
   Stethoscope,
   PawPrint,
-  FileText,
   Heart,
-  Shield,
   Activity,
   AlertCircle,
+  Clock3,
+  CalendarCheck,
+  Pill,
+  Clipboard,
+  DollarSign,
+  X,
 } from "lucide-react";
-import "./Appointment.css";
+import "./appointment.css";
 
 const Appointment = () => {
+  const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     date: "",
     time: "",
     checkupType: "",
     petName: "",
+    petBreed: "",
     petAge: "",
     petWeight: "",
     medicalHistory: "",
+    currentMedications: "",
+    allergies: "",
+    lastVisit: "",
     specialNotes: "",
   });
 
@@ -33,26 +42,36 @@ const Appointment = () => {
     "Emergency Care",
     "Surgery Consultation",
     "Behavioral Assessment",
+    "Grooming Services",
+    "Nutrition Consultation",
+    "Laboratory Tests",
+    "X-Ray and Imaging",
   ];
 
-  const healthFacts = [
+  const clinicServices = [
     {
-      icon: <Heart className="fact-icon" />,
-      title: "Regular Exercise",
-      description:
-        "Daily exercise helps maintain your pet's cardiovascular health and mental well-being.",
+      icon: <Stethoscope className="service-icon" />,
+      title: "General Checkup",
+      price: "₹500",
+      duration: "30 mins",
     },
     {
-      icon: <Shield className="fact-icon" />,
-      title: "Vaccination Schedule",
-      description:
-        "Keep your pet protected with timely vaccinations against common diseases.",
+      icon: <Pill className="service-icon" />,
+      title: "Vaccination",
+      price: "₹500",
+      duration: "20 mins",
     },
     {
-      icon: <Activity className="fact-icon" />,
-      title: "Dental Health",
-      description:
-        "Regular dental care prevents serious health issues and extends your pet's life.",
+      icon: <Activity className="service-icon" />,
+      title: "Surgery",
+      price: "₹500 + Additional Charges",
+      duration: "1-3 hours",
+    },
+    {
+      icon: <Heart className="service-icon" />,
+      title: "Emergency Care",
+      price: "₹500 + Additional Charges",
+      duration: "As needed",
     },
   ];
 
@@ -67,11 +86,20 @@ const Appointment = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Appointment Data:", formData);
+    setShowModal(false);
+  };
+
+  const openModal = () => {
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
   };
 
   return (
     <div className="appointment-container">
-      <div className="importance-banner animate-fade-in">
+      <div className="importance-banner">
         <AlertCircle className="importance-icon" />
         <h2>Why Regular Pet Checkups Are Crucial</h2>
         <p>
@@ -81,149 +109,247 @@ const Appointment = () => {
         </p>
       </div>
 
-      <div className="appointment-header animate-fade-in">
+      <div className="appointment-header">
         <h1>
-          <Stethoscope className="icon pulse" /> Pet Checkup Appointment
+          <Stethoscope className="header-icon" /> Pet Checkup Appointment
         </h1>
         <p>Schedule a comprehensive health checkup for your beloved pet</p>
+        <button className="book-appointment-btn" onClick={openModal}>
+          Book Appointment
+        </button>
+      </div>
+
+      <div className="clinic-info">
+        <h2>Our Clinic Hours</h2>
+        <div className="clinic-hours">
+          <div className="hours-item">
+            <Clock3 className="hours-icon" />
+            <span>Monday - Friday: 8:00 AM - 8:00 PM</span>
+          </div>
+          <div className="hours-item">
+            <Clock3 className="hours-icon" />
+            <span>Saturday: 9:00 AM - 6:00 PM</span>
+          </div>
+          <div className="hours-item">
+            <Clock3 className="hours-icon" />
+            <span>Sunday: 10:00 AM - 4:00 PM</span>
+          </div>
+        </div>
+        <div className="emergency-notice">
+          <AlertCircle className="emergency-icon" />
+          <p>24/7 Emergency Services Available</p>
+        </div>
+      </div>
+
+      <div className="services-grid">
+        {clinicServices.map((service, index) => (
+          <div key={index} className="service-card">
+            {service.icon}
+            <h3>{service.title}</h3>
+            <div className="service-details">
+              <p className="service-price">
+                <DollarSign className="detail-icon" /> {service.price}
+              </p>
+              <p className="service-duration">
+                <Clock className="detail-icon" /> {service.duration}
+              </p>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="appointment-content">
-        <div className="appointment-info animate-slide-in">
-          <h2>Benefits of Regular Checkups</h2>
-          <ul>
-            <li>Early detection of potential health issues</li>
-            <li>Preventive care and timely vaccinations</li>
-            <li>Professional dental cleaning and care</li>
-            <li>Growth and development monitoring</li>
-            <li>Behavioral assessment and guidance</li>
-            <li>Nutritional advice and weight management</li>
-            <li>Parasite prevention and control</li>
-          </ul>
-
-          <div className="appointment-image">
-            <img
-              src="https://images.unsplash.com/photo-1628009368231-7bb7cf0a6250?auto=format&fit=crop&w=800&q=80"
-              alt="Veterinary checkup"
-            />
-          </div>
-
-          <div className="health-facts-section">
-            <h2>Pet Health Care Facts</h2>
-            <div className="facts-container">
-              {healthFacts.map((fact, index) => (
-                <div key={index} className="fact-card">
-                  {fact.icon}
-                  <h3>{fact.title}</h3>
-                  <p>{fact.description}</p>
-                </div>
-              ))}
+        <div className="appointment-info">
+          <h2>Our Services Include</h2>
+          <div className="services-list">
+            <div className="service-item">
+              <CalendarCheck className="service-icon" />
+              <h3>Scheduled Checkups</h3>
+              <p>Regular health monitoring and preventive care</p>
+            </div>
+            <div className="service-item">
+              <Pill className="service-icon" />
+              <h3>Vaccinations</h3>
+              <p>Complete vaccination programs for all pets</p>
+            </div>
+            <div className="service-item">
+              <Clipboard className="service-icon" />
+              <h3>Health Certificates</h3>
+              <p>Travel and regulatory documentation</p>
             </div>
           </div>
         </div>
-
-        <form
-          className="appointment-form animate-slide-in"
-          onSubmit={handleSubmit}
-        >
-          <div className="datetime-group">
-            <label>
-              <Calendar className="icon" /> Schedule Your Visit
-            </label>
-            <div className="datetime-inputs">
-              <input
-                type="date"
-                name="date"
-                value={formData.date}
-                onChange={handleInputChange}
-                required
-              />
-              <input
-                type="time"
-                name="time"
-                value={formData.time}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>
-              <FileText className="icon" /> Checkup Type
-            </label>
-            <select
-              name="checkupType"
-              value={formData.checkupType}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="">Select a checkup type</option>
-              {checkupTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>
-              <PawPrint className="icon" /> Pet Information
-            </label>
-            <input
-              type="text"
-              name="petName"
-              placeholder="Pet's Name"
-              value={formData.petName}
-              onChange={handleInputChange}
-              required
-            />
-            <div className="pet-details">
-              <input
-                type="number"
-                name="petAge"
-                placeholder="Age (years)"
-                value={formData.petAge}
-                onChange={handleInputChange}
-                required
-              />
-              <input
-                type="number"
-                name="petWeight"
-                placeholder="Weight (kg)"
-                value={formData.petWeight}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Medical History</label>
-            <textarea
-              name="medicalHistory"
-              placeholder="Previous conditions, surgeries, or ongoing treatments..."
-              value={formData.medicalHistory}
-              onChange={handleInputChange}
-            ></textarea>
-          </div>
-
-          <div className="form-group">
-            <label>Special Notes</label>
-            <textarea
-              name="specialNotes"
-              placeholder="Any specific concerns or behavioral notes..."
-              value={formData.specialNotes}
-              onChange={handleInputChange}
-            ></textarea>
-          </div>
-
-          <button type="submit" className="submit-button">
-            Schedule Appointment
-          </button>
-        </form>
       </div>
+
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Book Your Appointment</h2>
+              <button className="close-modal" onClick={closeModal}>
+                <X />
+              </button>
+            </div>
+
+            <form className="appointment-form" onSubmit={handleSubmit}>
+              <div className="form-section">
+                <h3>Appointment Details</h3>
+                <div className="form-group">
+                  <label>
+                    <Calendar className="form-icon" /> Preferred Date
+                  </label>
+                  <input
+                    type="date"
+                    name="date"
+                    value={formData.date}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>
+                    <Clock className="form-icon" /> Preferred Time
+                  </label>
+                  <input
+                    type="time"
+                    name="time"
+                    value={formData.time}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>
+                    <Stethoscope className="form-icon" /> Type of Visit
+                  </label>
+                  <select
+                    name="checkupType"
+                    value={formData.checkupType}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="">Select visit type</option>
+                    {checkupTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-section">
+                <h3>Pet Information</h3>
+                <div className="form-group">
+                  <label>
+                    <PawPrint className="form-icon" /> Pet's Name
+                  </label>
+                  <input
+                    type="text"
+                    name="petName"
+                    value={formData.petName}
+                    onChange={handleInputChange}
+                    placeholder="Enter pet's name"
+                    required
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Breed</label>
+                    <input
+                      type="text"
+                      name="petBreed"
+                      value={formData.petBreed}
+                      onChange={handleInputChange}
+                      placeholder="Pet's breed"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Age (years)</label>
+                    <input
+                      type="number"
+                      name="petAge"
+                      value={formData.petAge}
+                      onChange={handleInputChange}
+                      placeholder="Pet's age"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Weight (kg)</label>
+                    <input
+                      type="number"
+                      name="petWeight"
+                      value={formData.petWeight}
+                      onChange={handleInputChange}
+                      placeholder="Pet's weight"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="form-section">
+                <h3>Medical Information</h3>
+                <div className="form-group">
+                  <label>Medical History</label>
+                  <textarea
+                    name="medicalHistory"
+                    value={formData.medicalHistory}
+                    onChange={handleInputChange}
+                    placeholder="Previous conditions, surgeries, or ongoing treatments..."
+                  ></textarea>
+                </div>
+
+                <div className="form-group">
+                  <label>Current Medications</label>
+                  <textarea
+                    name="currentMedications"
+                    value={formData.currentMedications}
+                    onChange={handleInputChange}
+                    placeholder="List any current medications..."
+                  ></textarea>
+                </div>
+
+                <div className="form-group">
+                  <label>Allergies</label>
+                  <textarea
+                    name="allergies"
+                    value={formData.allergies}
+                    onChange={handleInputChange}
+                    placeholder="List any known allergies..."
+                  ></textarea>
+                </div>
+
+                <div className="form-group">
+                  <label>Special Notes</label>
+                  <textarea
+                    name="specialNotes"
+                    value={formData.specialNotes}
+                    onChange={handleInputChange}
+                    placeholder="Any specific concerns or special instructions..."
+                  ></textarea>
+                </div>
+              </div>
+
+              <div className="consultation-fee">
+                <DollarSign className="fee-icon" />
+                <span>Doctor Consultation Fee: ₹500</span>
+              </div>
+
+              <button type="submit" className="submit-button">
+                Schedule Appointment
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
