@@ -144,3 +144,21 @@ class RescueRequestSerializer(serializers.ModelSerializer):
             RescueImage.objects.create(rescue_request=rescue_request, image=image)
             
         return rescue_request
+    
+    
+from. models import Appointment
+class AppointmentSerializer(serializers.ModelSerializer):
+    user_details = UserSerializer(source='user', read_only=True)
+    
+    class Meta:
+        model = Appointment
+        fields = '__all__'
+        read_only_fields = ['user', 'created_at', 'status']
+        
+    def update(self, instance, validated_data):
+        if instance.status != 'pending':
+            if 'date' in validated_data or 'time' in validated_data:
+                raise serializers.ValidationError({
+                    'non_field_errors': ['Can only reschedule pending appointments']
+                })
+        return super().update(instance, validated_data)

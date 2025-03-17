@@ -263,3 +263,29 @@ th {
         padding-top: 25px; /* Adjust for smaller navbar */
     }
 }
+/* Add to your CSS */
+.status-cancelled {
+    background-color: #dc3545;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+}
+
+.cancel-btn {
+    background-color: #dc3545;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.cancel-btn:hover {
+    background-color: #bb2d3b;
+}
+
+.cancel-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}

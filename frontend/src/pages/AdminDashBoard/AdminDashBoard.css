@@ -352,3 +352,50 @@ button.feature-btn:hover {
     border-radius: 8px;
     margin-top: 20px;
 }
+/* Add to your admin dashboard CSS */
+.pet-info p {
+    margin: 2px 0;
+    font-size: 0.9em;
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.action-buttons button {
+    padding: 5px 10px;
+    font-size: 0.8em;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+}
+
+.status-badge.pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.confirmed {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-badge.completed {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-badge.cancelled {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.cancel-btn {
+    background-color: #dc3545;
+    color: white;
+}

@@ -52,37 +52,39 @@ const AdminDashBoard = () => {
     navigate("/login");
   };
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case "profile":
-        return <AdminProfile />;
-      case "users":
-        return <TotalUsers users={users} />;
-      case "rescue":
-        return (
-          <RescueRequests
-            requests={rescueRequests}
-            fetchRescueRequests={fetchRescueRequests}
-          />
-        );
-      case "rescue-history":
-        return <RescueHistory history={rescueHistory} />;
-      case "adoption":
-        return <AdoptionRequests requests={adoptionRequests} />;
-      case "add-dog":
-        return <AddDog />;
-      case "adoption-history":
-        return <AdoptionHistory />;
-      case "vet":
-        return <VetAppointments />;
-      case "feedback":
-        return <Feedbacks />;
-      case "donations":
-        return <Donations />;
-      default:
-        return <AdminProfile />;
-    }
-  };
+ const renderContent = () => {
+   switch (activeTab) {
+     case "profile":
+       return <AdminProfile />;
+     case "users":
+       return <TotalUsers users={users} />;
+     case "rescue":
+       return (
+         <RescueRequests
+           requests={rescueRequests}
+           fetchRescueRequests={fetchRescueRequests}
+         />
+       );
+     case "rescue-history":
+       return <RescueHistory history={rescueHistory} />;
+     case "adoption":
+       return <AdoptionRequests requests={adoptionRequests} />;
+     case "add-dog":
+       return <AddDog />;
+     case "adoption-history":
+       return <AdoptionHistory />;
+     case "vet":
+       return <VetAppointments />;
+     case "appointment-history": // New tab
+       return <AppointmentHistory />;
+     case "feedback":
+       return <Feedbacks />;
+     case "donations":
+       return <Donations />;
+     default:
+       return <AdminProfile />;
+   }
+ };
 
   return (
     <div className="admin-container">
@@ -142,6 +144,14 @@ const AdminDashBoard = () => {
             onClick={() => setActiveTab("vet")}
           >
             🏥 Vet Appointments
+          </button>
+          <button
+            className={`sidebar-btn ${
+              activeTab === "appointment-history" ? "active" : ""
+            }`}
+            onClick={() => setActiveTab("appointment-history")}
+          >
+            📜 Appointment History
           </button>
           <button
             className={`sidebar-btn ${
@@ -909,12 +919,299 @@ const RescueHistory = ({ history }) => {
   );
 };
 
-const VetAppointments = () => (
-  <div className="dashboard-section">
-    <h2>Vet Appointments</h2>
-    <p>List of upcoming vet appointments will appear here.</p>
-  </div>
-);
+const VetAppointments = () => {
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const response = await AxiosInstance.get("/appointments/");
+        // Filter to show only pending appointments
+        const pendingAppointments = response.data.filter(
+          (appt) => appt.status === "pending"
+        );
+        setAppointments(pendingAppointments);
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAppointments();
+  }, []);
+
+  const handleStatusChange = async (appointmentId, newStatus) => {
+    try {
+      await AxiosInstance.post(
+        `/appointments/${appointmentId}/update-status/`,
+        { status: newStatus }
+      );
+      // Refresh the list after status change
+      const response = await AxiosInstance.get("/appointments/");
+      const pendingAppointments = response.data.filter(
+        (appt) => appt.status === "pending"
+      );
+      setAppointments(pendingAppointments);
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("Failed to update appointment status. Please try again.");
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      pending: { text: "Pending", className: "status-pending" },
+      confirmed: { text: "Confirmed", className: "status-confirmed" },
+      completed: { text: "Completed", className: "status-completed" },
+      cancelled: { text: "Cancelled", className: "status-cancelled" },
+    };
+    const { text, className } = statusMap[status] || {
+      text: "Unknown",
+      className: "status-unknown",
+    };
+    return <span className={`status-badge ${className}`}>{text}</span>;
+  };
+
+  if (loading) return <div className="loading">Loading appointments...</div>;
+
+  return (
+    <div className="dashboard-section">
+      <h2>Vet Appointments ({appointments.length})</h2>
+      <div className="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Pet Info</th>
+              <th>Appointment Details</th>
+              <th>Medical Info</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {appointments.map((appt) => (
+              <tr key={appt.id}>
+                <td>
+                  <div className="user-info">
+                    <img
+                      src={
+                        appt.user_details?.profile_picture ||
+                        "/default-avatar.png"
+                      }
+                      alt={appt.user_details?.full_name}
+                      width="50"
+                      height="50"
+                      style={{ borderRadius: "50%" }}
+                    />
+                    <div>
+                      <p>{appt.user_details?.full_name}</p>
+                      <small>{appt.user_details?.email}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div className="pet-info">
+                    <p>
+                      <strong>Name:</strong> {appt.pet_name}
+                    </p>
+                    <p>
+                      <strong>Breed:</strong> {appt.pet_breed}
+                    </p>
+                    <p>
+                      <strong>Age:</strong> {appt.pet_age} years
+                    </p>
+                    <p>
+                      <strong>Weight:</strong> {appt.pet_weight} kg
+                    </p>
+                  </div>
+                </td>
+                <td>
+                  <p>
+                    <strong>Type:</strong> {appt.checkup_type}
+                  </p>
+                  <p>
+                    <strong>Date:</strong>{" "}
+                    {new Date(appt.date).toLocaleDateString()}
+                  </p>
+                  <p>
+                    <strong>Time:</strong> {appt.time}
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    <strong>Medical History:</strong>{" "}
+                    {appt.medical_history || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Medications:</strong>{" "}
+                    {appt.current_medications || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Allergies:</strong> {appt.allergies || "N/A"}
+                  </p>
+                </td>
+                <td>{getStatusBadge(appt.status)}</td>
+                <td>
+                  <div className="action-buttons">
+                    <button
+                      onClick={() => handleStatusChange(appt.id, "confirmed")}
+                      disabled={
+                        appt.status === "confirmed" ||
+                        appt.status === "cancelled"
+                      }
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange(appt.id, "cancelled")}
+                      className="cancel-btn"
+                      disabled={appt.status === "cancelled"}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {appointments.length === 0 && (
+          <div className="no-results">No pending appointments found</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const AppointmentHistory = () => {
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const response = await AxiosInstance.get("/appointments/");
+        setAppointments(response.data);
+        setError(null);
+      } catch (error) {
+        setError("Failed to load appointment history");
+        console.error("Error fetching appointment history:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAppointments();
+  }, []);
+
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      pending: { text: "Pending", className: "status-pending" },
+      confirmed: { text: "Confirmed", className: "status-confirmed" },
+      completed: { text: "Completed", className: "status-completed" },
+      cancelled: { text: "Cancelled", className: "status-cancelled" },
+    };
+    const { text, className } = statusMap[status] || {
+      text: "Unknown",
+      className: "status-unknown",
+    };
+    return <span className={`status-badge ${className}`}>{text}</span>;
+  };
+
+  if (loading)
+    return <div className="loading">Loading appointment history...</div>;
+  if (error) return <div className="error">{error}</div>;
+
+  return (
+    <div className="dashboard-section">
+      <h2>Appointment History</h2>
+      <div className="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Pet Info</th>
+              <th>Appointment Details</th>
+              <th>Medical Info</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {appointments.map((appt) => (
+              <tr key={appt.id}>
+                <td>
+                  <div className="user-info">
+                    <img
+                      src={
+                        appt.user_details?.profile_picture ||
+                        "/default-avatar.png"
+                      }
+                      alt={appt.user_details?.full_name}
+                      width="50"
+                      height="50"
+                      style={{ borderRadius: "50%" }}
+                    />
+                    <div>
+                      <p>{appt.user_details?.full_name}</p>
+                      <small>{appt.user_details?.email}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div className="pet-info">
+                    <p>
+                      <strong>Name:</strong> {appt.pet_name}
+                    </p>
+                    <p>
+                      <strong>Breed:</strong> {appt.pet_breed}
+                    </p>
+                    <p>
+                      <strong>Age:</strong> {appt.pet_age} years
+                    </p>
+                    <p>
+                      <strong>Weight:</strong> {appt.pet_weight} kg
+                    </p>
+                  </div>
+                </td>
+                <td>
+                  <p>
+                    <strong>Type:</strong> {appt.checkup_type}
+                  </p>
+                  <p>
+                    <strong>Date:</strong>{" "}
+                    {new Date(appt.date).toLocaleDateString()}
+                  </p>
+                  <p>
+                    <strong>Time:</strong> {appt.time}
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    <strong>Medical History:</strong>{" "}
+                    {appt.medical_history || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Medications:</strong>{" "}
+                    {appt.current_medications || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Allergies:</strong> {appt.allergies || "N/A"}
+                  </p>
+                </td>
+                <td>{getStatusBadge(appt.status)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {appointments.length === 0 && (
+          <div className="no-results">No appointment history found</div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const Donations = () => (
   <div className="dashboard-section">

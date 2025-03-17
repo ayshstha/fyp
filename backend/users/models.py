@@ -137,3 +137,27 @@ def password_reset_token_created(reset_password_token, *args, **kwargs):
 
     msg.attach_alternative(html_message, "text/html")
     msg.send()
+    
+    # models.py
+class Appointment(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    date = models.DateField()
+    time = models.TimeField()
+    checkup_type = models.CharField(max_length=100)
+    pet_name = models.CharField(max_length=100)
+    pet_breed = models.CharField(max_length=100)
+    pet_age = models.IntegerField()
+    pet_weight = models.FloatField()
+    medical_history = models.TextField(blank=True)
+    current_medications = models.TextField(blank=True)
+    allergies = models.TextField(blank=True)
+    special_notes = models.TextField(blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[('pending', 'Pending'), ('confirmed', 'Confirmed'), ('cancelled', 'Cancelled')],
+        default='pending'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.pet_name} - {self.checkup_type}"

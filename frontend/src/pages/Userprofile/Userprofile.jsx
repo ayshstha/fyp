@@ -126,12 +126,245 @@ const AdoptionHistory = () => {
   );
 };
 
-const VetHistory = () => (
-  <div className="section-container">
-    <h2>Vet Appointments</h2>
-    <p>Your veterinary history will appear here.</p>
-  </div>
-);
+const VetHistory = () => {
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+
+  useEffect(() => {
+    const fetchVetHistory = async () => {
+      try {
+        const response = await AxiosInstance.get("/appointments/");
+        setAppointments(response.data);
+        setError(null);
+      } catch (error) {
+        setError("Failed to load vet history");
+        console.error("Error fetching vet history:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchVetHistory();
+  }, []);
+
+  const handleCancel = async (appointmentId) => {
+    if (window.confirm("Are you sure you want to cancel this appointment?")) {
+      try {
+        await AxiosInstance.post(
+          `/appointments/${appointmentId}/update-status/`,
+          { status: "cancelled" }
+        );
+        const response = await AxiosInstance.get("/appointments/");
+        setAppointments(response.data);
+      } catch (error) {
+        console.error("Error cancelling appointment:", error);
+        alert("Failed to cancel appointment. Please try again.");
+      }
+    }
+  };
+
+  const handleReschedule = async (appointmentId, newDate, newTime) => {
+    try {
+      await AxiosInstance.patch(`/appointments/${appointmentId}/`, {
+        date: newDate,
+        time: newTime,
+      });
+      const response = await AxiosInstance.get("/appointments/");
+      setAppointments(response.data);
+    } catch (error) {
+      console.error("Reschedule error:", error);
+      alert(
+        error.response?.data?.non_field_errors?.[0] || "Failed to reschedule"
+      );
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    const statusMap = {
+      pending: { text: "Pending", className: "status-pending" },
+      confirmed: { text: "Confirmed", className: "status-confirmed" },
+      completed: { text: "Completed", className: "status-completed" },
+      cancelled: { text: "Cancelled", className: "status-cancelled" },
+    };
+    const { text, className } = statusMap[status] || {
+      text: "Unknown",
+      className: "status-unknown",
+    };
+    return <span className={`status-badge ${className}`}>{text}</span>;
+  };
+
+  if (loading) return <div className="loading">Loading vet history...</div>;
+  if (error) return <div className="error">{error}</div>;
+
+  return (
+    <div className="section-container">
+      <h2>Vet Appointments</h2>
+
+      {showRescheduleModal && (
+        <RescheduleModal
+          appointment={selectedAppointment}
+          onClose={() => setShowRescheduleModal(false)}
+          onReschedule={handleReschedule}
+        />
+      )}
+
+      {appointments.length === 0 ? (
+        <p>No vet appointments found.</p>
+      ) : (
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Pet Info</th>
+                <th>Appointment Details</th>
+                <th>Medical Info</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {appointments.map((appt) => (
+                <tr key={appt.id}>
+                  <td>
+                    <div className="pet-info">
+                      <p>
+                        <strong>Name:</strong> {appt.pet_name}
+                      </p>
+                      <p>
+                        <strong>Breed:</strong> {appt.pet_breed}
+                      </p>
+                      <p>
+                        <strong>Age:</strong> {appt.pet_age} years
+                      </p>
+                      <p>
+                        <strong>Weight:</strong> {appt.pet_weight} kg
+                      </p>
+                    </div>
+                  </td>
+                  <td>
+                    <p>
+                      <strong>Type:</strong> {appt.checkup_type}
+                    </p>
+                    <p>
+                      <strong>Date:</strong>{" "}
+                      {new Date(appt.date).toLocaleDateString()}
+                    </p>
+                    <p>
+                      <strong>Time:</strong> {appt.time}
+                    </p>
+                  </td>
+                  <td>
+                    <p>
+                      <strong>Medical History:</strong>{" "}
+                      {appt.medical_history || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Medications:</strong>{" "}
+                      {appt.current_medications || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Allergies:</strong> {appt.allergies || "N/A"}
+                    </p>
+                  </td>
+                  <td>{getStatusBadge(appt.status)}</td>
+                  <td>
+                    <div className="action-buttons">
+                      {appt.status === "pending" && (
+                        <button
+                          className="reschedule-btn"
+                          onClick={() => {
+                            setSelectedAppointment(appt);
+                            setShowRescheduleModal(true);
+                          }}
+                        >
+                          Reschedule
+                        </button>
+                      )}
+                      {(appt.status === "pending" ||
+                        appt.status === "confirmed") && (
+                        <button
+                          className="cancel-btn"
+                          onClick={() => handleCancel(appt.id)}
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Add this RescheduleModal component
+const RescheduleModal = ({ appointment, onClose, onReschedule }) => {
+  const [date, setDate] = useState(appointment?.date || "");
+  const [time, setTime] = useState(appointment?.time || "");
+  const [errors, setErrors] = useState({});
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!date || !time) {
+      setErrors({ general: "Please fill in all fields" });
+      return;
+    }
+    try {
+      await onReschedule(appointment.id, date, time);
+      onClose();
+    } catch (error) {
+      setErrors({ general: error.message || "Failed to reschedule" });
+    }
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h2>Reschedule Appointment</h2>
+          <button className="close-modal" onClick={onClose}>
+            &times;
+          </button>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>New Date</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>New Time</label>
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              required
+            />
+          </div>
+          {errors.general && (
+            <div className="error-message">{errors.general}</div>
+          )}
+          <div className="modal-actions">
+            <button type="button" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit">Confirm Reschedule</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 const EditProfile = ({ user }) => {
   const [fullName, setFullName] = useState(user?.name || "");

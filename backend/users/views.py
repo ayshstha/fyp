@@ -321,3 +321,40 @@ class UpdateRescueRequestStatus(APIView):
         rescue_request.save()
 
         return Response({"message": f"Rescue request status updated to {new_status}"}, status=status.HTTP_200_OK)
+    
+
+# views.py
+class AppointmentViewSet(viewsets.ModelViewSet):
+    queryset = Appointment.objects.all()
+    serializer_class = AppointmentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return Appointment.objects.all().order_by('-date')
+        return Appointment.objects.filter(user=self.request.user).order_by('-date')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+# In views.py, update UpdateAppointmentStatus
+class UpdateAppointmentStatus(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, appointment_id):
+        try:
+            appointment = Appointment.objects.get(id=appointment_id)
+        except Appointment.DoesNotExist:
+            return Response({"error": "Appointment not found"}, status=404)
+
+        new_status = request.data.get('status')
+        if new_status not in ['confirmed', 'cancelled']:
+            return Response({"error": "Invalid status"}, status=400)
+
+        # Check if user owns the appointment or is admin
+        if not request.user.is_superuser and appointment.user != request.user:
+            return Response({"error": "Permission denied"}, status=403)
+
+        appointment.status = new_status
+        appointment.save()
+        return Response({"message": f"Status updated to {new_status}"})
