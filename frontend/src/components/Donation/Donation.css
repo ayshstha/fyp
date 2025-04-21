@@ -1,0 +1,139 @@
+/* KhaltiPayment.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+.donation-container {
+    font-family: 'Poppins', sans-serif;
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    color: #2d3436;
+}
+
+.hero-section {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: linear-gradient(135deg, #ff7675 0%, #d63031 100%);
+    border-radius: 15px;
+    color: white;
+    margin-bottom: 2rem;
+}
+
+.hero-section h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.content-wrapper {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: 1fr 1fr;
+}
+
+.impact-section {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.impact-grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.impact-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.impact-card:hover {
+    transform: translateY(-5px);
+}
+
+.impact-card .icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.donation-form {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.input-group {
+    margin-bottom: 1.5rem;
+}
+
+input {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    transition: border-color 0.3s ease;
+}
+
+input:focus {
+    border-color: #ff7675;
+    outline: none;
+}
+
+.donate-button {
+    width: 100%;
+    padding: 1.2rem;
+    background: #00b894;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.donate-button:hover:not(:disabled) {
+    background: #00a383;
+    transform: scale(1.02);
+}
+
+.donate-button:disabled {
+    background: #b2bec3;
+    cursor: not-allowed;
+}
+
+.security-note {
+    margin-top: 1.5rem;
+    text-align: center;
+    color: #636e72;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.error-message {
+    color: #d63031;
+    background: #ffeaea;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+@media (max-width: 768px) {
+    .content-wrapper {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+}
